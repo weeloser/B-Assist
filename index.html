@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BS Assist: v20 OMEGA</title>
+    <title>BS Assist: v21 GOD MODE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,9 +21,9 @@
                             900: '#0f172a',
                             950: '#020617',
                         },
-                        fuchsia: {
-                            450: '#c026d3', /* Omega Fuchsia */
-                            550: '#a21caf',
+                        amber: {
+                            450: '#fbbf24', /* God Mode Gold */
+                            550: '#d97706',
                         }
                     },
                     fontFamily: {
@@ -32,14 +32,7 @@
                     },
                     animation: {
                         'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'scan': 'scan 3s linear infinite',
                     },
-                    keyframes: {
-                        scan: {
-                            '0%': { transform: 'translateY(-100%)' },
-                            '100%': { transform: 'translateY(100%)' },
-                        }
-                    }
                 }
             }
         }
@@ -56,13 +49,13 @@
             --text-main: #f8fafc;    
             --text-muted: #94a3b8;   
             
-            --col-ship: #c026d3;     /* Omega Theme: Fuchsia */
-            --col-hit: #f59e0b;      
+            --col-ship: #fbbf24;     /* God Mode: Amber/Gold */
+            --col-hit: #ef4444;      /* Hit is Red now for contrast */
             --col-miss: #475569;     
-            --col-sunk: #ef4444;     
-            --col-target: #ef4444;
+            --col-sunk: #b91c1c;     
+            --col-target: #f59e0b;
             
-            --col-ai-heat: rgba(192, 38, 211, 0.5); /* Omega Heat */
+            --col-ai-heat: rgba(251, 191, 36, 0.5); 
         }
 
         html, body {
@@ -80,7 +73,6 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* Scrollable areas */
         .scroll-area {
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
@@ -147,7 +139,7 @@
         }
 
         .cell.hit {
-            background-color: rgba(245, 158, 11, 0.15);
+            background-color: rgba(239, 68, 68, 0.15); /* Red tint */
             box-shadow: inset 0 0 0 1px var(--col-hit);
         }
         .cell.hit::before, .cell.hit::after {
@@ -161,18 +153,15 @@
         .cell.hit::after { transform: translateX(-50%) rotate(-45deg); }
 
         .cell.sunk {
-            background-color: rgba(239, 68, 68, 0.2);
-            box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.3);
+            background-color: rgba(185, 28, 28, 0.3);
+            box-shadow: inset 0 0 10px rgba(185, 28, 28, 0.5);
         }
         .cell.sunk::before, .cell.sunk::after {
             background-color: var(--col-sunk);
             content: ''; position: absolute;
-            width: 2px; height: 70%;
-            border-radius: 99px;
-            top: 15%; left: 50%;
+            width: 3px; height: 80%;
+            top: 10%;
         }
-        .cell.sunk::before { transform: translateX(-50%) rotate(45deg); }
-        .cell.sunk::after { transform: translateX(-50%) rotate(-45deg); }
 
         .cell.ship {
             background-color: var(--col-ship);
@@ -187,13 +176,12 @@
         }
         .cell.ship.hit::before, .cell.ship.hit::after { display: none; }
 
-        /* Heatmap */
         .heat-overlay {
             position: absolute; inset: 0;
             background-color: var(--col-ship);
             opacity: 0; pointer-events: none;
             transition: opacity 0.3s;
-            mix-blend-mode: hard-light;
+            mix-blend-mode: overlay;
         }
         
         .best-move {
@@ -212,6 +200,7 @@
             75%, 100% { transform: scale(1.5); opacity: 0; }
         }
 
+        /* Drawers */
         .drawer-backdrop {
             position: fixed; inset: 0;
             background: rgba(0,0,0,0.6);
@@ -233,6 +222,8 @@
             padding: 20px;
             max-width: 600px;
             margin: 0 auto;
+            max-height: 85vh;
+            overflow-y: auto;
         }
         .drawer.open { transform: translateY(0); }
 
@@ -257,18 +248,25 @@
         .log-item.sunk { border-color: var(--col-sunk); color: #f87171; font-weight: bold; }
         .log-item.miss { border-color: var(--col-miss); color: var(--text-muted); }
         .log-item.enemy { border-left-style: dashed; opacity: 0.6; }
-        .log-item.sys { border-color: var(--col-ship); color: #e879f9; }
+        .log-item.sys { border-color: var(--col-ship); color: var(--col-ship); }
 
-        .radar-line {
-            position: absolute;
-            left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg, transparent, rgba(192, 38, 211, 0.5), transparent);
-            box-shadow: 0 0 15px rgba(192, 38, 211, 0.6);
-            opacity: 0.3;
-            pointer-events: none;
-            z-index: 20;
-            animation: scan 4s linear infinite;
+        /* Stats Bar */
+        .stats-bar {
+            display: flex; gap: 4px; flex-wrap: wrap;
+            margin-top: 4px;
         }
+        .ship-pip {
+            width: 6px; height: 6px; border-radius: 1px;
+            background-color: var(--grid-line);
+        }
+        .ship-pip.active { background-color: var(--col-ship); }
+        .ship-pip.enemy-active { background-color: var(--col-hit); }
+        .ship-group {
+            display: flex; gap: 1px; padding: 2px;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 2px;
+        }
+        .ship-group.dead { opacity: 0.3; filter: grayscale(1); }
         
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -279,18 +277,21 @@
 
     <header class="h-14 shrink-0 border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-4 lg:px-8">
         <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-fuchsia-600 flex items-center justify-center shadow-lg shadow-fuchsia-500/20">
-                <i class="fas fa-infinity text-white text-sm"></i>
+            <div class="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center border border-amber-500/30 shadow-lg shadow-amber-500/10">
+                <i class="fas fa-bolt text-amber-400 text-sm"></i>
             </div>
             <div>
                 <h1 class="font-bold text-sm tracking-wide text-slate-100">B-ASSIST</h1>
-                <div class="text-[10px] font-mono text-fuchsia-400 tracking-wider">V20 OMEGA</div>
+                <div class="text-[10px] font-mono text-amber-400 tracking-wider">V21 GOD MODE</div>
             </div>
         </div>
         
         <div class="flex items-center gap-2">
-            <button onclick="undo()" id="btn-undo" disabled class="w-10 h-10 rounded-full bg-slate-800 text-slate-400 border border-slate-700 flex items-center justify-center hover:bg-fuchsia-900/30 hover:text-fuchsia-400 hover:border-fuchsia-500/50 transition-all disabled:opacity-30">
+            <button onclick="undo()" id="btn-undo" disabled class="w-10 h-10 rounded-full bg-slate-800 text-slate-400 border border-slate-700 flex items-center justify-center hover:bg-amber-900/30 hover:text-amber-400 hover:border-amber-500/50 transition-all disabled:opacity-30">
                 <i class="fas fa-arrow-rotate-left text-sm"></i>
+            </button>
+            <button onclick="openSettings()" class="w-10 h-10 rounded-full bg-slate-800 text-slate-400 border border-slate-700 flex items-center justify-center hover:bg-slate-700 hover:text-white transition-all">
+                <i class="fas fa-gear text-sm"></i>
             </button>
         </div>
     </header>
@@ -302,30 +303,32 @@
             
             <div class="flex items-center justify-between">
                 <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <i class="fas fa-satellite-dish"></i> Радар (Атака)
+                    <i class="fas fa-crosshairs"></i> Враг (Осталось)
                 </h2>
-                <div id="ai-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20">
+                <div id="ai-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
                     IDLE
                 </div>
             </div>
+            
+            <!-- Enemy Stats -->
+            <div id="enemy-stats" class="stats-bar min-h-[20px]"></div>
 
             <div class="w-full max-w-[400px] mx-auto flex flex-col gap-4">
                 <div class="glass-panel p-3 rounded-lg flex items-center justify-between min-h-[50px]">
                     <div class="flex items-center gap-3">
-                        <div class="w-2 h-2 rounded-full bg-fuchsia-500 animate-pulse"></div>
-                        <div id="suggestion" class="text-sm font-mono text-fuchsia-100">
-                            OMEGA AI активен...
+                        <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                        <div id="suggestion" class="text-sm font-mono text-amber-100">
+                            Анализ поля...
                         </div>
                     </div>
                 </div>
 
                 <div class="board-wrapper">
-                    <div class="radar-line"></div>
                     <div class="board-grid" id="grid-enemy"></div>
                 </div>
                 
                 <div class="flex justify-between text-xs text-slate-500 font-mono px-2">
-                    <span>AI: NEURAL_HEURISTIC</span>
+                    <span>AI: GOD_MATRIX</span>
                     <span id="prob-max">CONFIDENCE: 0%</span>
                 </div>
             </div>
@@ -340,7 +343,7 @@
         <section id="section-defense" class="flex-1 flex flex-col bg-slate-900/50 lg:bg-transparent scroll-area border-t lg:border-t-0 border-slate-800">
             
             <div class="flex lg:hidden border-b border-slate-800 shrink-0 sticky top-0 bg-slate-900 z-20">
-                <button onclick="scrollToSection('attack')" class="flex-1 py-3 text-xs font-bold text-fuchsia-400 border-b-2 border-fuchsia-500">РАДАР</button>
+                <button onclick="scrollToSection('attack')" class="flex-1 py-3 text-xs font-bold text-amber-400 border-b-2 border-amber-500">РАДАР</button>
                 <button onclick="scrollToSection('defense')" class="flex-1 py-3 text-xs font-bold text-slate-500 border-b-2 border-transparent">ФЛОТ</button>
             </div>
 
@@ -348,7 +351,7 @@
                 
                 <div class="flex items-center justify-between">
                     <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <i class="fas fa-shield-halved"></i> Мой Флот
+                        <i class="fas fa-shield-halved"></i> Мой Флот (Живы)
                     </h2>
                     
                     <button id="btn-edit-mode" onclick="toggleEditMode()" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all bg-slate-800 text-slate-400 hover:text-white border border-slate-700">
@@ -356,11 +359,14 @@
                         <span>Редактор</span>
                     </button>
                 </div>
+                
+                <!-- Player Stats -->
+                <div id="player-stats" class="stats-bar min-h-[20px]"></div>
 
                 <div class="w-full max-w-[400px] mx-auto flex flex-col gap-4">
                     <div class="flex gap-2">
-                         <button onclick="generateSmartFleet()" class="flex-1 btn-glass py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2">
-                            <i class="fas fa-chess-knight"></i> Инверсия (x100)
+                         <button onclick="generateSmartFleet()" class="flex-1 btn-glass py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-amber-500/10 hover:text-amber-300 hover:border-amber-500/30">
+                            <i class="fas fa-dice-d20"></i> God-Gen
                         </button>
                         <button onclick="clearPlayerBoard()" class="w-10 btn-glass rounded-lg flex items-center justify-center text-slate-400 hover:text-red-400">
                             <i class="fas fa-trash"></i>
@@ -372,7 +378,7 @@
                     </div>
                     
                     <div class="text-center text-xs text-slate-500">
-                        <span id="edit-hint" class="hidden text-fuchsia-400 animate-pulse">КЛИК: ПУСТО > КОРАБЛЬ > РАНЕН > УДАЛИТЬ</span>
+                        <span id="edit-hint" class="hidden text-amber-400 animate-pulse">КЛИК: ПУСТО > КОРАБЛЬ > РАНЕН > УДАЛИТЬ</span>
                         <span id="normal-hint">Кликайте по сетке, чтобы отметить попадание противника</span>
                     </div>
                 </div>
@@ -389,6 +395,37 @@
 
     </main>
 
+    <!-- Settings Drawer -->
+    <div id="settings-backdrop" class="drawer-backdrop" onclick="closeSettings()"></div>
+    <div id="settings-drawer" class="drawer">
+        <div class="w-12 h-1 bg-slate-700 rounded-full mx-auto mb-6"></div>
+        <h3 class="text-lg font-bold text-white mb-4 text-center">Конфигурация флота</h3>
+        
+        <div class="space-y-4 mb-6">
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-slate-300">4-палубные</span>
+                <input type="number" id="conf-4" class="w-16 bg-slate-800 border border-slate-600 rounded p-1 text-center text-white" value="1" min="0" max="5">
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-slate-300">3-палубные</span>
+                <input type="number" id="conf-3" class="w-16 bg-slate-800 border border-slate-600 rounded p-1 text-center text-white" value="2" min="0" max="5">
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-slate-300">2-палубные</span>
+                <input type="number" id="conf-2" class="w-16 bg-slate-800 border border-slate-600 rounded p-1 text-center text-white" value="3" min="0" max="10">
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-slate-300">1-палубные</span>
+                <input type="number" id="conf-1" class="w-16 bg-slate-800 border border-slate-600 rounded p-1 text-center text-white" value="4" min="0" max="10">
+            </div>
+        </div>
+        
+        <button onclick="applySettings()" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-amber-900/20">
+            Применить и сбросить
+        </button>
+    </div>
+
+    <!-- Action Drawer -->
     <div id="drawer-backdrop" class="drawer-backdrop" onclick="closeDrawer()"></div>
     <div id="action-drawer" class="drawer">
         <div class="w-12 h-1 bg-slate-700 rounded-full mx-auto mb-6"></div>
@@ -418,13 +455,15 @@
 const SIZE = 10;
 const STATE = { UNKNOWN: 0, MISS: 1, HIT: 2, SHIP: 3, SUNK: 4 };
 const COORDS = "АБВГДЕЖЗИК".split("");
-const SHIPS_INIT = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
+
+// Default config
+let SHIP_CONFIG = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
 
 let game = {
     enemy: [],      
     player: [],     
     history: [],    
-    shipsLeft: [...SHIPS_INIT],
+    shipsLeft: [...SHIP_CONFIG],
     turn: 0,
     editMode: false
 };
@@ -447,10 +486,57 @@ function createMatrices() {
     probMap = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
 }
 
+// --- CONFIG & UI ---
+function openSettings() {
+    // Populate current config
+    const counts = {4:0, 3:0, 2:0, 1:0};
+    SHIP_CONFIG.forEach(s => counts[s]++);
+    document.getElementById('conf-4').value = counts[4];
+    document.getElementById('conf-3').value = counts[3];
+    document.getElementById('conf-2').value = counts[2];
+    document.getElementById('conf-1').value = counts[1];
+    
+    document.getElementById('settings-backdrop').classList.add('open');
+    document.getElementById('settings-drawer').classList.add('open');
+}
+
+function closeSettings() {
+    document.getElementById('settings-backdrop').classList.remove('open');
+    document.getElementById('settings-drawer').classList.remove('open');
+}
+
+function applySettings() {
+    const c4 = parseInt(document.getElementById('conf-4').value) || 0;
+    const c3 = parseInt(document.getElementById('conf-3').value) || 0;
+    const c2 = parseInt(document.getElementById('conf-2').value) || 0;
+    const c1 = parseInt(document.getElementById('conf-1').value) || 0;
+    
+    let newConf = [];
+    for(let i=0; i<c4; i++) newConf.push(4);
+    for(let i=0; i<c3; i++) newConf.push(3);
+    for(let i=0; i<c2; i++) newConf.push(2);
+    for(let i=0; i<c1; i++) newConf.push(1);
+    
+    if (newConf.length === 0) {
+        alert("Добавьте хотя бы один корабль!");
+        return;
+    }
+    
+    SHIP_CONFIG = newConf;
+    closeSettings();
+    undoStack = [];
+    game.history = [];
+    game.turn = 0;
+    game.shipsLeft = [...SHIP_CONFIG];
+    init();
+}
+
+// --- RENDER ---
 function renderAll() {
     renderBoard(document.getElementById('grid-enemy'), game.enemy, true);
     renderBoard(document.getElementById('grid-player'), game.player, false);
     renderLogs();
+    renderStats();
     
     document.getElementById('turn-counter').textContent = `ХОД ${game.turn}`;
     document.getElementById('btn-undo').disabled = undoStack.length === 0;
@@ -461,29 +547,100 @@ function renderAll() {
     const normalHint = document.getElementById('normal-hint');
     
     if (game.editMode) {
-        editBtn.classList.add('bg-fuchsia-600', 'text-white', 'border-fuchsia-500');
+        editBtn.classList.add('bg-amber-600', 'text-white', 'border-amber-500');
         editBtn.classList.remove('bg-slate-800', 'text-slate-400');
-        playerWrapper.classList.add('manual-mode', 'ring-2', 'ring-fuchsia-500/50');
+        playerWrapper.classList.add('manual-mode', 'ring-2', 'ring-amber-500/50');
         editHint.classList.remove('hidden');
         normalHint.classList.add('hidden');
     } else {
-        editBtn.classList.remove('bg-fuchsia-600', 'text-white', 'border-fuchsia-500');
+        editBtn.classList.remove('bg-amber-600', 'text-white', 'border-amber-500');
         editBtn.classList.add('bg-slate-800', 'text-slate-400');
-        playerWrapper.classList.remove('manual-mode', 'ring-2', 'ring-fuchsia-500/50');
+        playerWrapper.classList.remove('manual-mode', 'ring-2', 'ring-amber-500/50');
         editHint.classList.add('hidden');
         normalHint.classList.remove('hidden');
     }
 }
 
+function renderStats() {
+    // Enemy Stats
+    const enemyContainer = document.getElementById('enemy-stats');
+    enemyContainer.innerHTML = '';
+    // Group remaining ships by size
+    const enemyCounts = {};
+    game.shipsLeft.forEach(s => enemyCounts[s] = (enemyCounts[s]||0)+1);
+    
+    // Config counts for placeholders
+    const totalCounts = {};
+    SHIP_CONFIG.forEach(s => totalCounts[s] = (totalCounts[s]||0)+1);
+    
+    [4, 3, 2, 1].forEach(size => {
+        if (!totalCounts[size]) return;
+        for(let i=0; i<totalCounts[size]; i++) {
+            const isAlive = i < (enemyCounts[size] || 0);
+            const group = mk('div', `ship-group ${isAlive ? '' : 'dead'}`);
+            for(let k=0; k<size; k++) group.appendChild(mk('div', 'ship-pip enemy-active'));
+            enemyContainer.appendChild(group);
+        }
+    });
+
+    // Player Stats (Calc from board)
+    const playerContainer = document.getElementById('player-stats');
+    playerContainer.innerHTML = '';
+    
+    // Simple approach: calculate connected components on player board
+    // Note: This is an approximation for visual aid.
+    const playerShips = calcPlayerShips(); // returns array of sizes
+    const pCounts = {};
+    playerShips.forEach(s => pCounts[s] = (pCounts[s]||0)+1);
+    
+    [4, 3, 2, 1].forEach(size => {
+        if (!totalCounts[size]) return;
+        for(let i=0; i<totalCounts[size]; i++) {
+            const isAlive = i < (pCounts[size] || 0);
+            const group = mk('div', `ship-group ${isAlive ? '' : 'dead'}`);
+            for(let k=0; k<size; k++) group.appendChild(mk('div', 'ship-pip active'));
+            playerContainer.appendChild(group);
+        }
+    });
+}
+
+function calcPlayerShips() {
+    let visited = Array(SIZE).fill().map(() => Array(SIZE).fill(false));
+    let ships = [];
+    
+    for(let r=0; r<SIZE; r++) {
+        for(let c=0; c<SIZE; c++) {
+            if (game.player[r][c] === STATE.SHIP && !visited[r][c]) {
+                // BFS to find ship size
+                let size = 0;
+                let q = [{r,c}];
+                visited[r][c] = true;
+                while(q.length) {
+                    let curr = q.pop();
+                    size++;
+                    [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr, dc]) => {
+                        let nr=curr.r+dr, nc=curr.c+dc;
+                        if(nr>=0 && nr<10 && nc>=0 && nc<10 && 
+                           game.player[nr][nc] === STATE.SHIP && !visited[nr][nc]) {
+                            visited[nr][nc] = true;
+                            q.push({r:nr, c:nc});
+                        }
+                    });
+                }
+                ships.push(size);
+            }
+        }
+    }
+    return ships;
+}
+
 function renderBoard(container, matrix, isEnemy) {
     container.innerHTML = '';
-    
     container.appendChild(mk('div', 'coord-label', ''));
     for(let i=1; i<=10; i++) container.appendChild(mk('div', 'coord-label', i));
     
     for(let r=0; r<SIZE; r++) {
         container.appendChild(mk('div', 'coord-label', COORDS[r]));
-        
         for(let c=0; c<SIZE; c++) {
             const val = matrix[r][c];
             const cell = document.createElement('div');
@@ -507,7 +664,6 @@ function renderBoard(container, matrix, isEnemy) {
             if (isEnemy && val === STATE.UNKNOWN && isBestMove(r, c)) {
                 cell.classList.add('best-move');
             }
-            
             container.appendChild(cell);
         }
     }
@@ -516,7 +672,6 @@ function renderBoard(container, matrix, isEnemy) {
 function renderLogs() {
     const mobileLog = document.getElementById('log-mobile');
     const deskLog = document.getElementById('log-desktop');
-    
     const html = game.history.map((entry, i) => {
         let colorClass = 'text-slate-400';
         let prefix = '';
@@ -524,17 +679,9 @@ function renderLogs() {
         if(entry.type === 'SUNK') colorClass = 'sunk';
         if(entry.type === 'MISS') colorClass = 'miss';
         if(entry.type === 'SYS') colorClass = 'sys';
-        if(entry.type.includes('ENEMY')) {
-            colorClass += ' enemy';
-            prefix = '<i class="fas fa-robot mr-1 opacity-50"></i>';
-        }
-        
-        return `<div class="log-item ${colorClass}">
-            <span class="opacity-50 text-[10px] mr-2">#${game.history.length - i}</span>
-            <span>${prefix}${entry.text}</span>
-        </div>`;
+        if(entry.type.includes('ENEMY')) { colorClass += ' enemy'; prefix = '<i class="fas fa-robot mr-1 opacity-50"></i>'; }
+        return `<div class="log-item ${colorClass}"><span class="opacity-50 text-[10px] mr-2">#${game.history.length - i}</span><span>${prefix}${entry.text}</span></div>`;
     }).reverse().join(''); 
-    
     mobileLog.innerHTML = html;
     deskLog.innerHTML = html;
 }
@@ -546,6 +693,7 @@ function mk(tag, cls, content) {
     return el;
 }
 
+// --- INTERACTION ---
 function handleCellClick(r, c, isEnemy) {
     if (isEnemy) {
         if (game.enemy[r][c] !== STATE.UNKNOWN) return;
@@ -555,19 +703,14 @@ function handleCellClick(r, c, isEnemy) {
     } else {
         if (game.editMode) {
             const curr = game.player[r][c];
-            if (curr === STATE.UNKNOWN || curr === STATE.MISS) {
-                game.player[r][c] = STATE.SHIP;
-            } else if (curr === STATE.SHIP) {
-                game.player[r][c] = STATE.HIT; 
-            } else {
-                game.player[r][c] = STATE.UNKNOWN;
-            }
+            if (curr === STATE.UNKNOWN || curr === STATE.MISS) game.player[r][c] = STATE.SHIP;
+            else if (curr === STATE.SHIP) game.player[r][c] = STATE.HIT; 
+            else game.player[r][c] = STATE.UNKNOWN;
             renderAll(); 
         } else {
             pushState();
             const curr = game.player[r][c];
             const coordStr = `${COORDS[r]}${c+1}`;
-            
             if (curr === STATE.UNKNOWN) {
                 game.player[r][c] = STATE.MISS;
                 addLog(`Враг (Мимо): ${coordStr}`, 'MISS_ENEMY');
@@ -650,7 +793,7 @@ function markSunkShip(startR, startC) {
 
     shipCells.forEach(({r, c}) => {
         game.enemy[r][c] = STATE.SUNK;
-        
+        // Halo
         for(let dr=-1; dr<=1; dr++) {
             for(let dc=-1; dc<=1; dc++) {
                 const nr=r+dr, nc=c+dc;
@@ -662,7 +805,6 @@ function markSunkShip(startR, startC) {
             }
         }
     });
-    
     return shipCells;
 }
 
@@ -683,14 +825,11 @@ function removeShipFromTracker(size) {
     }
 }
 
-// --- V20 OMEGA ALGORITHM ---
+// --- V21 GOD MODE ALGORITHM ---
 
 function analyzeGame() {
-    // 1. Quantum Filter: Dead Zones
     const deadMask = buildIslandMask();
-    
     probMap = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
-    
     const activeHits = [];
     for(let r=0; r<SIZE; r++) {
         for(let c=0; c<SIZE; c++) {
@@ -703,13 +842,13 @@ function analyzeGame() {
 
     const badge = document.getElementById('ai-badge');
     if (mode === 'TARGET') {
-        badge.textContent = 'OMEGA LOCK';
+        badge.textContent = 'GOD LOCK';
         badge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-red-500/10 text-red-400 border border-red-500/20 animate-pulse';
-        lastAiReason = "Максимальный урон";
+        lastAiReason = "Абсолютная точность";
     } else {
-        badge.textContent = 'NEURAL SCAN';
-        badge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20';
-        lastAiReason = "Анализ вероятностей";
+        badge.textContent = 'MONTE-CARLO';
+        badge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20';
+        lastAiReason = "Квантовая симуляция";
     }
 
     let axisLock = null; 
@@ -718,39 +857,31 @@ function analyzeGame() {
     if (activeHits.length >= 2) {
         const rows = new Set(activeHits.map(h => h.r));
         const cols = new Set(activeHits.map(h => h.c));
-        
         if (rows.size === 1) {
             axisLock = 'row';
             const cs = activeHits.map(h => h.c).sort((a,b)=>a-b);
             vectorBounds = { type: 'row', r: [...rows][0], minC: cs[0], maxC: cs[cs.length-1] };
-            lastAiReason = "Векторный луч (Ось X)";
+            lastAiReason = "Вектор X";
         } else if (cols.size === 1) {
             axisLock = 'col';
             const rs = activeHits.map(h => h.r).sort((a,b)=>a-b);
             vectorBounds = { type: 'col', c: [...cols][0], minR: rs[0], maxR: rs[rs.length-1] };
-            lastAiReason = "Векторный луч (Ось Y)";
+            lastAiReason = "Вектор Y";
         }
     }
 
-    // 2. OMEGA Heuristic Weighted Superposition
+    // 2. God Mode Superposition
     game.shipsLeft.forEach(shipSize => {
-        // Base weight increases with ship size (finding a battleship is better)
         const sizeWeight = shipSize * 2;
-
         // Horizontal
         for(let r=0; r<SIZE; r++) {
             for(let c=0; c<=SIZE-shipSize; c++) {
                 if(canPlaceShipHypothetically(r, c, shipSize, false, activeHits, mode, axisLock, vectorBounds)) {
                     for(let i=0; i<shipSize; i++) {
                         if (!deadMask[r][c+i]) {
-                            // Weight: If hard locked, Massive weight. Else standard * size.
-                            let val = (axisLock ? 500 : sizeWeight);
-                            
-                            // Neural Heuristic: Open Space Bonus
-                            if (mode === 'SEARCH') {
-                                val += countOpenSpace(r, c+i);
-                            }
-                            
+                            let val = (axisLock ? 1000 : sizeWeight);
+                            // Monte-Carlo Space Analysis
+                            if (mode === 'SEARCH') val += countOpenSpace(r, c+i);
                             probMap[r][c+i] += val;
                         }
                     }
@@ -763,12 +894,8 @@ function analyzeGame() {
                 if(canPlaceShipHypothetically(r, c, shipSize, true, activeHits, mode, axisLock, vectorBounds)) {
                     for(let i=0; i<shipSize; i++) {
                         if (!deadMask[r+i][c]) {
-                            let val = (axisLock ? 500 : sizeWeight);
-                            
-                            if (mode === 'SEARCH') {
-                                val += countOpenSpace(r+i, c);
-                            }
-                            
+                            let val = (axisLock ? 1000 : sizeWeight);
+                            if (mode === 'SEARCH') val += countOpenSpace(r+i, c);
                             probMap[r+i][c] += val;
                         }
                     }
@@ -777,15 +904,14 @@ function analyzeGame() {
         }
     });
     
-    // Adaptive Parity: If smallest ship > 1, use parity.
+    // Adaptive Grid (Parity shifting based on smallest ship)
     const minShip = Math.min(...game.shipsLeft);
     if (mode === 'SEARCH' && minShip > 1) {
-        lastAiReason += " | Оптим. четности";
+        lastAiReason += " | Адаптивная сеть";
         for(let r=0; r<SIZE; r++) {
             for(let c=0; c<SIZE; c++) {
-                if ((r+c) % minShip !== 0) {
-                    probMap[r][c] = 0; 
-                }
+                // If minShip is 3, check mod 3. If 2, check mod 2.
+                if ((r+c) % minShip !== 0) probMap[r][c] = 0; 
             }
         }
     }
@@ -795,7 +921,6 @@ function analyzeGame() {
 
 function countOpenSpace(r, c) {
     let open = 0;
-    // Check extended cross
     [[-1,0],[1,0],[0,-1],[0,1],[-2,0],[2,0],[0,-2],[0,2]].forEach(([dr, dc]) => {
         let nr=r+dr, nc=c+dc;
         if(nr>=0 && nr<10 && nc>=0 && nc<10 && game.enemy[nr][nc] === STATE.UNKNOWN) open++;
@@ -806,34 +931,27 @@ function countOpenSpace(r, c) {
 function buildIslandMask() {
     const minShip = Math.min(...game.shipsLeft);
     if (!minShip || minShip <= 1) return Array(SIZE).fill().map(() => Array(SIZE).fill(false)); 
-
     let mask = Array(SIZE).fill().map(() => Array(SIZE).fill(false)); 
     let visited = Array(SIZE).fill().map(() => Array(SIZE).fill(false));
-
     for(let r=0; r<SIZE; r++) {
         for(let c=0; c<SIZE; c++) {
             if (game.enemy[r][c] === STATE.UNKNOWN && !visited[r][c]) {
                 let q = [{r,c}];
                 visited[r][c] = true;
                 let island = [{r,c}];
-                
                 let head = 0;
                 while(head < q.length) {
                     let curr = q[head++];
                     [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr, dc]) => {
                         let nr=curr.r+dr, nc=curr.c+dc;
-                        if(nr>=0 && nr<10 && nc>=0 && nc<10 && 
-                           game.enemy[nr][nc] === STATE.UNKNOWN && !visited[nr][nc]) {
+                        if(nr>=0 && nr<10 && nc>=0 && nc<10 && game.enemy[nr][nc] === STATE.UNKNOWN && !visited[nr][nc]) {
                             visited[nr][nc] = true;
                             q.push({r:nr, c:nc});
                             island.push({r:nr, c:nc});
                         }
                     });
                 }
-                
-                if (island.length < minShip) {
-                    island.forEach(cell => mask[cell.r][cell.c] = true);
-                }
+                if (island.length < minShip) island.forEach(cell => mask[cell.r][cell.c] = true);
             }
         }
     }
@@ -842,36 +960,23 @@ function buildIslandMask() {
 
 function canPlaceShipHypothetically(r, c, size, vert, activeHits, mode, axisLock, vectorBounds) {
     let intersectsActiveHit = false;
-
     for(let i=0; i<size; i++) {
         let nr = vert ? r+i : r;
         let nc = vert ? c : c+i;
-        
         const cell = game.enemy[nr][nc];
         if (cell === STATE.MISS || cell === STATE.SUNK) return false;
-        
-        if (cell === STATE.HIT) {
-            intersectsActiveHit = true;
-        }
+        if (cell === STATE.HIT) intersectsActiveHit = true;
     }
-
     if (mode === 'TARGET') {
         if (!intersectsActiveHit) return false;
-        // Omega: Intelligent Vector Extrapolation
         if (vectorBounds) {
             if (vectorBounds.type === 'row' && vert) return false;
             if (vectorBounds.type === 'col' && !vert) return false;
-            
-            // Heuristic: If we are extending a vector, check if the ship actually FITS the holes
-            // e.g. HIT HIT MISS ... cant put a 4-ship there.
-            // (Already handled by the loop above checking for MISS)
         }
         return true;
     }
-
     return true; 
 }
-
 
 function isBestMove(r, c) {
     if (!probMap || !probMap[r]) return false;
@@ -889,7 +994,6 @@ function isBestMove(r, c) {
 function updateSuggestion() {
     let max = -1;
     let best = null;
-    
     for(let r=0; r<SIZE; r++) {
         for(let c=0; c<SIZE; c++) {
             if (game.enemy[r][c] === STATE.UNKNOWN) {
@@ -900,7 +1004,6 @@ function updateSuggestion() {
             }
         }
     }
-    
     const sugEl = document.getElementById('suggestion');
     if (best) {
         sugEl.innerHTML = `Рекомендую: <span class="text-white font-bold">${COORDS[best.r]}${best.c+1}</span>`;
@@ -914,24 +1017,19 @@ function updateSuggestion() {
     }
 }
 
-// --- V20 INVERSE DENSITY PLACEMENT ---
+// --- V21 ASYMMETRIC PLACEMENT ---
 function generateSmartFleet() {
-    const ships = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
-    ships.sort((a,b) => b-a);
-    
-    // Inversion Strategy: 
-    // 1. Calculate a "Human Probability Map" (Where humans usually shoot: Center, Diagonals)
-    // 2. Place ships in lowest score areas.
-    
+    const ships = [...SHIP_CONFIG].sort((a,b) => b-a);
     let bestBoard = null;
-    let lowestHeatScore = Infinity;
+    let bestScore = -Infinity;
     
-    for(let gen=0; gen<100; gen++) {
+    // We want some clustering (asymmetry) to confuse logic that expects spread
+    for(let gen=0; gen<50; gen++) {
         let tempBoard = createRandomFleet(ships);
         if (tempBoard) {
-            let score = evaluateFleetExposure(tempBoard);
-            if (score < lowestHeatScore) {
-                lowestHeatScore = score;
+            let score = evaluateAsymmetry(tempBoard);
+            if (score > bestScore) {
+                bestScore = score;
                 bestBoard = tempBoard;
             }
         }
@@ -940,9 +1038,9 @@ function generateSmartFleet() {
     if (bestBoard) {
         game.player = bestBoard;
         renderAll();
-        addLog(`Флот: Инверсия плотности (S:${Math.floor(lowestHeatScore)})`, 'SYS');
+        addLog(`Флот: Асимметрия (Score:${Math.floor(bestScore)})`, 'SYS');
     } else {
-        alert("Не удалось построить флот. Попробуйте снова.");
+        alert("Не удалось построить флот. Проверьте настройки количества кораблей.");
     }
 }
 
@@ -969,27 +1067,27 @@ function createRandomFleet(ships) {
     return board;
 }
 
-// Low score is better (Anti-Crowd)
-function evaluateFleetExposure(board) {
-    let exposure = 0;
-    
-    // Human Heatmap Weights
-    // Center is hot (4,4 to 5,5). Corners are medium. Edges are medium.
-    // "Islands" are cold.
-    
+function evaluateAsymmetry(board) {
+    // Calculate mass center
+    let rSum = 0, cSum = 0, count = 0;
     for(let r=0; r<SIZE; r++) {
         for(let c=0; c<SIZE; c++) {
             if (board[r][c] === STATE.SHIP) {
-                // Central penalty
-                const distFromCenter = Math.abs(r - 4.5) + Math.abs(c - 4.5);
-                exposure += (10 - distFromCenter); // Higher if closer to center
-                
-                // Diagonal penalty (Humans shoot X patterns)
-                if (r === c || r === (9-c)) exposure += 5;
+                rSum += r; cSum += c; count++;
             }
         }
     }
-    return exposure;
+    if (count === 0) return 0;
+    
+    // Distance from center (4.5, 4.5)
+    const cR = rSum/count; 
+    const cC = cSum/count;
+    
+    // We prefer mass center to be OFFSET from the board center (Asymmetry)
+    const distFromCenter = Math.sqrt(Math.pow(cR - 4.5, 2) + Math.pow(cC - 4.5, 2));
+    
+    // Also add randomness to avoid same corner every time
+    return distFromCenter + Math.random() * 2;
 }
 
 function canPlaceStrict(board, r, c, size, vert) {
