@@ -2,13 +2,11 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BS Assist: v21 GOD MODE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>BS Assist: v101 QUANTUM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
@@ -16,23 +14,27 @@
             theme: {
                 extend: {
                     colors: {
-                        slate: {
-                            850: '#1e293b',
-                            900: '#0f172a',
-                            950: '#020617',
-                        },
-                        amber: {
-                            450: '#fbbf24', /* God Mode Gold */
-                            550: '#d97706',
-                        }
+                        bg: '#050505',
+                        panel: '#0a0a0a',
+                        surface: '#121212',
+                        cyan: { 400: '#22d3ee', 500: '#06b6d4', 900: '#164e63' },
+                        rose: { 500: '#f43f5e', 900: '#881337' }
                     },
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
                         mono: ['JetBrains Mono', 'monospace'],
                     },
                     animation: {
-                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'scan': 'scan 3s linear infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     },
+                    keyframes: {
+                        scan: {
+                            '0%': { transform: 'translateY(-100%)', opacity: 0 },
+                            '50%': { opacity: 1 },
+                            '100%': { transform: 'translateY(100%)', opacity: 0 }
+                        }
+                    }
                 }
             }
         }
@@ -40,68 +42,47 @@
 
     <style>
         :root {
-            --bg-page: #0f172a;      
-            --bg-panel: #1e293b;     
-            --grid-line: #334155;    
-            --cell-bg: #1e293b;
-            --cell-hover: #334155;
-            
-            --text-main: #f8fafc;    
-            --text-muted: #94a3b8;   
-            
-            --col-ship: #fbbf24;     /* God Mode: Amber/Gold */
-            --col-hit: #ef4444;      /* Hit is Red now for contrast */
-            --col-miss: #475569;     
-            --col-sunk: #b91c1c;     
-            --col-target: #f59e0b;
-            
-            --col-ai-heat: rgba(251, 191, 36, 0.5); 
-        }
-
-        html, body {
-            height: 100%;
-            overflow: hidden; 
+            --col-accent: #22d3ee;
+            --col-danger: #f43f5e;
+            --col-grid: #1f2937;
+            --col-cell: #0f1014;
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(10, 10, 10, 0.85);
         }
 
         body {
-            background-color: var(--bg-page);
-            color: var(--text-main);
+            background-color: #020204;
+            color: #e5e5e5;
             font-family: 'Inter', sans-serif;
+            height: 100dvh; /* Dynamic viewport height for mobile */
+            overflow: hidden;
             display: flex;
             flex-direction: column;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
 
-        .scroll-area {
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-            scrollbar-color: #334155 transparent;
-        }
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .board-wrapper {
+        /* Board Styling */
+        .board-container {
             position: relative;
-            padding: 2px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            padding: 1px;
+            border-radius: 8px;
+            background: linear-gradient(180deg, rgba(34, 211, 238, 0.3) 0%, rgba(0,0,0,0) 100%);
+            box-shadow: 0 0 40px -10px rgba(34, 211, 238, 0.1);
         }
 
         .board-grid {
             display: grid;
-            grid-template-columns: 24px repeat(10, 1fr);
-            grid-template-rows: 24px repeat(10, 1fr);
+            grid-template-columns: 20px repeat(10, 1fr);
+            grid-template-rows: 20px repeat(10, 1fr);
             gap: 1px;
-            background-color: var(--grid-line);
-            border-radius: 10px;
+            background-color: var(--col-grid);
+            border-radius: 7px;
             overflow: hidden;
             position: relative;
         }
@@ -110,374 +91,349 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--text-muted);
-            background-color: var(--bg-page);
+            font-size: 9px;
+            font-weight: 600;
+            color: #525252;
+            background-color: var(--col-cell);
             font-family: 'JetBrains Mono', monospace;
         }
 
         .cell {
-            background-color: var(--cell-bg);
+            background-color: var(--col-cell);
             aspect-ratio: 1/1;
             position: relative;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.15s ease-out;
         }
         
-        .cell:active { transform: scale(0.95); }
-        .cell:hover { background-color: var(--cell-hover); }
-
+        .cell:active { background-color: #262626; }
+        
+        /* Cell States */
         .cell.miss::after {
-            content: '';
-            position: absolute;
+            content: ''; position: absolute;
             width: 4px; height: 4px;
-            background-color: var(--col-miss);
+            background-color: #404040;
             border-radius: 50%;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
         }
 
         .cell.hit {
-            background-color: rgba(239, 68, 68, 0.15); /* Red tint */
-            box-shadow: inset 0 0 0 1px var(--col-hit);
+            background-color: rgba(244, 63, 94, 0.15);
+            box-shadow: inset 0 0 0 1px var(--col-danger);
         }
         .cell.hit::before, .cell.hit::after {
             content: ''; position: absolute;
-            width: 2px; height: 70%;
-            background-color: var(--col-hit);
-            border-radius: 99px;
-            top: 15%; left: 50%;
+            width: 1.5px; height: 60%;
+            background-color: var(--col-danger);
+            top: 20%; left: 50%;
+            border-radius: 1px;
         }
         .cell.hit::before { transform: translateX(-50%) rotate(45deg); }
         .cell.hit::after { transform: translateX(-50%) rotate(-45deg); }
 
         .cell.sunk {
-            background-color: rgba(185, 28, 28, 0.3);
-            box-shadow: inset 0 0 10px rgba(185, 28, 28, 0.5);
-        }
-        .cell.sunk::before, .cell.sunk::after {
-            background-color: var(--col-sunk);
-            content: ''; position: absolute;
-            width: 3px; height: 80%;
-            top: 10%;
-        }
-
-        .cell.ship {
-            background-color: var(--col-ship);
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+            background-color: rgba(136, 19, 55, 0.5);
+            box-shadow: inset 0 0 15px rgba(244, 63, 94, 0.3);
         }
         
-        .manual-mode .cell.ship { opacity: 0.9; }
-        .manual-mode .cell:hover { border: 1px dashed var(--col-ship); }
-
-        .cell.ship.hit {
-            background-color: var(--col-hit);
+        .cell.ship {
+            background-color: rgba(6, 182, 212, 0.2);
+            box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.4);
         }
-        .cell.ship.hit::before, .cell.ship.hit::after { display: none; }
 
+        /* Overlay Effects */
         .heat-overlay {
             position: absolute; inset: 0;
-            background-color: var(--col-ship);
+            background-color: var(--col-accent);
             opacity: 0; pointer-events: none;
+            mix-blend-mode: screen;
             transition: opacity 0.3s;
-            mix-blend-mode: overlay;
         }
-        
+
         .best-move {
-            box-shadow: inset 0 0 0 2px var(--col-target);
+            box-shadow: inset 0 0 0 1px #fff, 0 0 10px var(--col-accent);
             z-index: 10;
+            animation: pulse-target 1.5s infinite;
         }
-        .best-move::after {
-            content: '';
-            position: absolute; inset: 0;
-            background-color: var(--col-target);
-            opacity: 0.2;
-            animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
-        }
-
-        @keyframes ping {
-            75%, 100% { transform: scale(1.5); opacity: 0; }
+        @keyframes pulse-target {
+            0% { box-shadow: inset 0 0 0 1px #fff, 0 0 5px var(--col-accent); }
+            50% { box-shadow: inset 0 0 0 2px #fff, 0 0 15px var(--col-accent); }
+            100% { box-shadow: inset 0 0 0 1px #fff, 0 0 5px var(--col-accent); }
         }
 
-        /* Drawers */
+        .scan-line {
+            position: absolute; inset: 0; height: 30%;
+            background: linear-gradient(to bottom, transparent, rgba(34, 211, 238, 0.15), transparent);
+            pointer-events: none; z-index: 20;
+            animation: scan 3s linear infinite;
+        }
+
+        /* UI Components */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
         .drawer-backdrop {
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(4px);
-            z-index: 40;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.3s;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(4px); z-index: 40;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
         }
         .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
 
         .drawer {
             position: fixed; bottom: 0; left: 0; right: 0;
-            background: var(--bg-panel);
-            border-top: 1px solid var(--grid-line);
+            background: #09090b;
+            border-top: 1px solid #27272a;
             border-radius: 20px 20px 0 0;
             transform: translateY(100%);
             transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 50;
-            padding: 20px;
-            max-width: 600px;
-            margin: 0 auto;
-            max-height: 85vh;
-            overflow-y: auto;
+            z-index: 50; padding: 24px;
+            padding-bottom: max(24px, env(safe-area-inset-bottom));
+            box-shadow: 0 -10px 50px rgba(0,0,0,0.7);
         }
         .drawer.open { transform: translateY(0); }
 
-        .btn-glass {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-main);
+        .btn-action {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #a3a3a3;
             transition: all 0.2s;
         }
-        .btn-glass:hover { background: rgba(255, 255, 255, 0.1); }
-        .btn-glass:active { transform: scale(0.97); }
+        .btn-action:active { transform: scale(0.98); }
+        .btn-action:hover { background: rgba(255,255,255,0.06); color: white; border-color: rgba(255,255,255,0.2); }
 
         .log-item {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            border-left: 2px solid var(--grid-line);
-            padding-left: 8px;
-            margin-bottom: 6px;
-            opacity: 0.8;
+            font-size: 10px;
+            border-left: 2px solid #333;
+            padding-left: 8px; margin-bottom: 6px;
+            color: #737373;
         }
-        .log-item.hit { border-color: var(--col-hit); color: #fbbf24; }
-        .log-item.sunk { border-color: var(--col-sunk); color: #f87171; font-weight: bold; }
-        .log-item.miss { border-color: var(--col-miss); color: var(--text-muted); }
-        .log-item.enemy { border-left-style: dashed; opacity: 0.6; }
-        .log-item.sys { border-color: var(--col-ship); color: var(--col-ship); }
-
-        /* Stats Bar */
-        .stats-bar {
-            display: flex; gap: 4px; flex-wrap: wrap;
-            margin-top: 4px;
-        }
-        .ship-pip {
-            width: 6px; height: 6px; border-radius: 1px;
-            background-color: var(--grid-line);
-        }
-        .ship-pip.active { background-color: var(--col-ship); }
-        .ship-pip.enemy-active { background-color: var(--col-hit); }
-        .ship-group {
-            display: flex; gap: 1px; padding: 2px;
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 2px;
-        }
-        .ship-group.dead { opacity: 0.3; filter: grayscale(1); }
         
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        .ship-pip { width: 4px; height: 4px; border-radius: 1px; background-color: #333; transition: all 0.3s; }
+        .ship-pip.active { background-color: var(--col-accent); box-shadow: 0 0 6px var(--col-accent); }
+        .ship-pip.enemy-active { background-color: var(--col-danger); box-shadow: 0 0 6px var(--col-danger); }
+        
+        .stat-group {
+            display: flex; gap: 2px; padding: 3px 6px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);
+        }
     </style>
 </head>
-<body class="antialiased">
+<body>
 
-    <header class="h-14 shrink-0 border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-4 lg:px-8">
+    <!-- Header -->
+    <header class="h-14 shrink-0 bg-black/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4 lg:px-8 z-30">
         <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center border border-amber-500/30 shadow-lg shadow-amber-500/10">
-                <i class="fas fa-bolt text-amber-400 text-sm"></i>
+            <div class="w-8 h-8 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-cyan-500/20 blur-md"></div>
+                <i class="fas fa-brain text-cyan-400 text-xs relative z-10"></i>
             </div>
-            <div>
-                <h1 class="font-bold text-sm tracking-wide text-slate-100">B-ASSIST</h1>
-                <div class="text-[10px] font-mono text-amber-400 tracking-wider">V21 GOD MODE</div>
+            <div class="flex flex-col">
+                <span class="text-xs font-bold tracking-[0.2em] text-white">B-ASSIST</span>
+                <span class="text-[9px] font-mono text-cyan-500 tracking-wider">v101 QUANTUM</span>
             </div>
         </div>
         
-        <div class="flex items-center gap-2">
-            <button onclick="undo()" id="btn-undo" disabled class="w-10 h-10 rounded-full bg-slate-800 text-slate-400 border border-slate-700 flex items-center justify-center hover:bg-amber-900/30 hover:text-amber-400 hover:border-amber-500/50 transition-all disabled:opacity-30">
-                <i class="fas fa-arrow-rotate-left text-sm"></i>
+        <div class="flex items-center gap-1 bg-white/5 rounded-full p-1 border border-white/5">
+            <button onclick="undo()" id="btn-undo" disabled class="w-8 h-8 rounded-full flex items-center justify-center text-neutral-500 hover:text-white hover:bg-white/10 transition-all disabled:opacity-30">
+                <i class="fas fa-arrow-rotate-left text-xs"></i>
             </button>
-            <button onclick="openSettings()" class="w-10 h-10 rounded-full bg-slate-800 text-slate-400 border border-slate-700 flex items-center justify-center hover:bg-slate-700 hover:text-white transition-all">
-                <i class="fas fa-gear text-sm"></i>
+            <div class="w-px h-3 bg-white/10 mx-1"></div>
+            <button onclick="openSettings()" class="w-8 h-8 rounded-full flex items-center justify-center text-neutral-500 hover:text-white hover:bg-white/10 transition-all">
+                <i class="fas fa-gear text-xs"></i>
             </button>
         </div>
     </header>
 
+    <!-- Main Content -->
     <main class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
         
-        <!-- Left Panel: Radar/Attack -->
-        <section id="section-attack" class="flex-1 flex flex-col p-4 lg:p-6 scroll-area lg:border-r border-slate-800 gap-6">
+        <!-- RADAR SECTION (Left/Top) -->
+        <section id="section-attack" class="flex-1 flex flex-col p-4 lg:p-8 custom-scroll overflow-y-auto lg:border-r border-white/5 gap-6">
             
+            <!-- Header Radar -->
             <div class="flex items-center justify-between">
-                <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <i class="fas fa-crosshairs"></i> Враг (Осталось)
-                </h2>
-                <div id="ai-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <div class="flex items-center gap-2">
+                    <div class="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse"></div>
+                    <h2 class="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.15em]">Scanner Array</h2>
+                </div>
+                <div id="ai-badge" class="px-2 py-1 bg-cyan-950/30 border border-cyan-800/30 rounded text-[9px] font-mono text-cyan-400">
                     IDLE
                 </div>
             </div>
-            
-            <!-- Enemy Stats -->
-            <div id="enemy-stats" class="stats-bar min-h-[20px]"></div>
 
-            <div class="w-full max-w-[400px] mx-auto flex flex-col gap-4">
-                <div class="glass-panel p-3 rounded-lg flex items-center justify-between min-h-[50px]">
+            <!-- Stats -->
+            <div id="enemy-stats" class="flex flex-wrap gap-2 justify-center lg:justify-start min-h-[24px]"></div>
+
+            <!-- Main Board Area -->
+            <div class="w-full max-w-[420px] mx-auto flex flex-col gap-4">
+                
+                <!-- Prediction Bar -->
+                <div class="glass-panel p-3 rounded-lg flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
-                        <div id="suggestion" class="text-sm font-mono text-amber-100">
-                            Анализ поля...
-                        </div>
+                        <i class="fas fa-microchip text-cyan-500/50 text-xs"></i>
+                        <span id="suggestion" class="text-[11px] font-mono text-cyan-100">Ожидание ввода...</span>
                     </div>
+                    <span id="prob-max" class="text-[10px] font-mono font-bold text-cyan-400">--</span>
                 </div>
 
-                <div class="board-wrapper">
+                <!-- The Board -->
+                <div class="board-container">
+                    <div class="scan-line"></div>
                     <div class="board-grid" id="grid-enemy"></div>
                 </div>
                 
-                <div class="flex justify-between text-xs text-slate-500 font-mono px-2">
-                    <span>AI: GOD_MATRIX</span>
-                    <span id="prob-max">CONFIDENCE: 0%</span>
-                </div>
-            </div>
-            
-            <div class="lg:hidden mt-4 pb-12">
-                <h3 class="text-xs font-bold text-slate-500 mb-2 uppercase">Журнал</h3>
-                <div id="log-mobile" class="h-48 overflow-y-auto pr-2 font-mono text-xs text-slate-400 border-t border-slate-800 pt-2"></div>
-            </div>
-        </section>
-
-        <!-- Right Panel: Fleet/Defense -->
-        <section id="section-defense" class="flex-1 flex flex-col bg-slate-900/50 lg:bg-transparent scroll-area border-t lg:border-t-0 border-slate-800">
-            
-            <div class="flex lg:hidden border-b border-slate-800 shrink-0 sticky top-0 bg-slate-900 z-20">
-                <button onclick="scrollToSection('attack')" class="flex-1 py-3 text-xs font-bold text-amber-400 border-b-2 border-amber-500">РАДАР</button>
-                <button onclick="scrollToSection('defense')" class="flex-1 py-3 text-xs font-bold text-slate-500 border-b-2 border-transparent">ФЛОТ</button>
-            </div>
-
-            <div class="p-4 lg:p-6 flex flex-col h-full gap-6">
-                
-                <div class="flex items-center justify-between">
-                    <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <i class="fas fa-shield-halved"></i> Мой Флот (Живы)
-                    </h2>
-                    
-                    <button id="btn-edit-mode" onclick="toggleEditMode()" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all bg-slate-800 text-slate-400 hover:text-white border border-slate-700">
-                        <i class="fas fa-pen"></i>
-                        <span>Редактор</span>
+                <!-- Footer Controls -->
+                <div class="flex justify-between items-center px-1">
+                    <span class="text-[9px] font-mono text-neutral-600">CPU: QUANTUM_THREAD_4</span>
+                    <button onclick="resetGame()" class="text-[9px] font-mono text-neutral-600 hover:text-red-400 transition-colors uppercase tracking-wider">
+                        System Reset
                     </button>
                 </div>
-                
-                <!-- Player Stats -->
-                <div id="player-stats" class="stats-bar min-h-[20px]"></div>
+            </div>
 
-                <div class="w-full max-w-[400px] mx-auto flex flex-col gap-4">
-                    <div class="flex gap-2">
-                         <button onclick="generateSmartFleet()" class="flex-1 btn-glass py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-amber-500/10 hover:text-amber-300 hover:border-amber-500/30">
-                            <i class="fas fa-dice-d20"></i> God-Gen
-                        </button>
-                        <button onclick="clearPlayerBoard()" class="w-10 btn-glass rounded-lg flex items-center justify-center text-slate-400 hover:text-red-400">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-
-                    <div class="board-wrapper" id="player-board-wrapper">
-                        <div class="board-grid" id="grid-player"></div>
-                    </div>
-                    
-                    <div class="text-center text-xs text-slate-500">
-                        <span id="edit-hint" class="hidden text-amber-400 animate-pulse">КЛИК: ПУСТО > КОРАБЛЬ > РАНЕН > УДАЛИТЬ</span>
-                        <span id="normal-hint">Кликайте по сетке, чтобы отметить попадание противника</span>
-                    </div>
-                </div>
-
-                <div class="hidden lg:flex flex-col flex-1 min-h-[200px] bg-slate-950/50 rounded-xl border border-slate-800 p-4 mt-4 mb-6">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-xs font-bold text-slate-500 uppercase">Боевой Журнал</h3>
-                        <span id="turn-counter" class="text-[10px] font-mono text-slate-600">ХОД 0</span>
-                    </div>
-                    <div id="log-desktop" class="flex-1 overflow-y-auto pr-2 custom-scrollbar font-mono text-sm space-y-1"></div>
-                </div>
+            <!-- Mobile Logs -->
+            <div class="lg:hidden mt-auto border-t border-white/5 pt-4">
+                <div id="log-mobile" class="h-24 overflow-y-auto custom-scroll"></div>
             </div>
         </section>
 
+        <!-- FLEET SECTION (Right/Bottom) -->
+        <section id="section-defense" class="flex-1 flex flex-col bg-surface/50 lg:bg-transparent custom-scroll overflow-y-auto border-t lg:border-t-0 border-white/5">
+            
+            <!-- Mobile Tabs -->
+            <div class="flex lg:hidden border-b border-white/5 shrink-0 sticky top-0 bg-black/95 backdrop-blur z-20">
+                <button onclick="scrollToSection('attack')" class="flex-1 py-3 text-[10px] font-bold tracking-widest text-cyan-400 border-b border-cyan-500/50 transition-all">RADAR</button>
+                <button onclick="scrollToSection('defense')" class="flex-1 py-3 text-[10px] font-bold tracking-widest text-neutral-500 border-b border-transparent transition-all">FLEET</button>
+            </div>
+
+            <div class="p-4 lg:p-8 flex flex-col h-full gap-6">
+                
+                <!-- Header Fleet -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-shield-halved text-neutral-600 text-xs"></i>
+                        <h2 class="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.15em]">Fleet Integrity</h2>
+                    </div>
+                    <button id="btn-edit-mode" onclick="toggleEditMode()" class="px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 text-[9px] font-bold uppercase tracking-wider text-neutral-400 hover:text-white transition-all">
+                        Edit
+                    </button>
+                </div>
+
+                <!-- Stats -->
+                <div id="player-stats" class="flex flex-wrap gap-2 justify-center lg:justify-start min-h-[24px]"></div>
+
+                <!-- Main Board Area -->
+                <div class="w-full max-w-[420px] mx-auto flex flex-col gap-4">
+                    
+                    <!-- Actions -->
+                    <div class="grid grid-cols-2 gap-3">
+                         <button onclick="generateSmartFleet()" class="btn-action py-3 rounded-lg flex items-center justify-center gap-2 group">
+                            <i class="fas fa-bolt text-cyan-500/70 group-hover:text-cyan-400 text-xs"></i>
+                            <span class="text-[10px] font-bold uppercase tracking-wider">Auto Gen</span>
+                        </button>
+                        <button onclick="clearPlayerBoard()" class="btn-action py-3 rounded-lg text-neutral-500 hover:text-red-400">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
+                    </div>
+
+                    <!-- The Board -->
+                    <div class="board-container bg-none shadow-none border border-white/5" id="player-board-wrapper">
+                        <div class="board-grid" id="grid-player"></div>
+                    </div>
+                </div>
+
+                <!-- Desktop Logs -->
+                <div class="hidden lg:flex flex-col flex-1 min-h-[150px] bg-black/40 border border-white/5 rounded-xl p-4 font-mono text-[10px]">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-white/5">
+                        <span class="text-neutral-500 font-bold">KERNEL LOG</span>
+                        <span id="turn-counter" class="text-cyan-600">SEQ: 0</span>
+                    </div>
+                    <div id="log-desktop" class="flex-1 overflow-y-auto custom-scroll pr-2"></div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- Settings Drawer -->
     <div id="settings-backdrop" class="drawer-backdrop" onclick="closeSettings()"></div>
     <div id="settings-drawer" class="drawer">
-        <div class="w-12 h-1 bg-slate-700 rounded-full mx-auto mb-6"></div>
-        <h3 class="text-lg font-bold text-white mb-4 text-center">Конфигурация флота</h3>
+        <div class="w-10 h-1 bg-neutral-800 rounded-full mx-auto mb-6"></div>
+        <h3 class="text-xs font-bold text-white mb-6 text-center uppercase tracking-[0.2em]">Configuration</h3>
         
-        <div class="space-y-4 mb-6">
-            <div class="flex items-center justify-between">
-                <span class="text-sm text-slate-300">4-палубные</span>
-                <input type="number" id="conf-4" class="w-16 bg-slate-800 border border-slate-600 rounded p-1 text-center text-white" value="1" min="0" max="5">
+        <div class="space-y-1 mb-8">
+            <!-- Config Rows -->
+            <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
+                <span class="text-[10px] font-bold text-neutral-400 uppercase">4-Unit Class</span>
+                <input type="number" id="conf-4" class="w-12 bg-transparent text-right text-white font-mono text-sm border-none focus:ring-0 p-0" value="1" min="0">
             </div>
-            <div class="flex items-center justify-between">
-                <span class="text-sm text-slate-300">3-палубные</span>
-                <input type="number" id="conf-3" class="w-16 bg-slate-800 border border-slate-600 rounded p-1 text-center text-white" value="2" min="0" max="5">
+            <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
+                <span class="text-[10px] font-bold text-neutral-400 uppercase">3-Unit Class</span>
+                <input type="number" id="conf-3" class="w-12 bg-transparent text-right text-white font-mono text-sm border-none focus:ring-0 p-0" value="2" min="0">
             </div>
-            <div class="flex items-center justify-between">
-                <span class="text-sm text-slate-300">2-палубные</span>
-                <input type="number" id="conf-2" class="w-16 bg-slate-800 border border-slate-600 rounded p-1 text-center text-white" value="3" min="0" max="10">
+            <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
+                <span class="text-[10px] font-bold text-neutral-400 uppercase">2-Unit Class</span>
+                <input type="number" id="conf-2" class="w-12 bg-transparent text-right text-white font-mono text-sm border-none focus:ring-0 p-0" value="3" min="0">
             </div>
-            <div class="flex items-center justify-between">
-                <span class="text-sm text-slate-300">1-палубные</span>
-                <input type="number" id="conf-1" class="w-16 bg-slate-800 border border-slate-600 rounded p-1 text-center text-white" value="4" min="0" max="10">
+            <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
+                <span class="text-[10px] font-bold text-neutral-400 uppercase">1-Unit Class</span>
+                <input type="number" id="conf-1" class="w-12 bg-transparent text-right text-white font-mono text-sm border-none focus:ring-0 p-0" value="4" min="0">
             </div>
         </div>
         
-        <button onclick="applySettings()" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-amber-900/20">
-            Применить и сбросить
+        <button onclick="applySettings()" class="w-full py-4 bg-white text-black text-[10px] font-bold uppercase tracking-[0.15em] rounded-lg hover:bg-cyan-50 transition-all">
+            System Reboot
         </button>
     </div>
 
     <!-- Action Drawer -->
-    <div id="drawer-backdrop" class="drawer-backdrop" onclick="closeDrawer()"></div>
+    <div id="action-backdrop" class="drawer-backdrop" onclick="closeDrawer()"></div>
     <div id="action-drawer" class="drawer">
-        <div class="w-12 h-1 bg-slate-700 rounded-full mx-auto mb-6"></div>
-        
         <div class="flex items-end justify-center gap-3 mb-8">
-            <span class="text-sm text-slate-400 pb-1">Цель:</span>
-            <span id="drawer-coord" class="text-4xl font-mono font-bold text-white">A1</span>
+            <span class="text-[10px] text-neutral-500 pb-1.5 uppercase tracking-widest">Vector</span>
+            <span id="drawer-coord" class="text-5xl font-mono font-bold text-white tracking-tighter">A1</span>
         </div>
-        
         <div class="grid grid-cols-3 gap-3">
-            <button onclick="commitResult(1)" class="p-4 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-white transition-all flex flex-col items-center gap-2">
-                <i class="fas fa-water text-xl"></i>
-                <span class="text-xs font-bold">МИМО</span>
+            <button onclick="commitResult(1)" class="p-4 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 hover:border-white/20 transition-all group">
+                <div class="text-[10px] uppercase tracking-widest text-neutral-400 group-hover:text-white font-bold mb-1">Miss</div>
+                <div class="h-0.5 w-full bg-neutral-700 group-hover:bg-white transition-all rounded-full"></div>
             </button>
-            <button onclick="commitResult(2)" class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/50 text-amber-500 hover:bg-amber-500/20 transition-all flex flex-col items-center gap-2">
-                <i class="fas fa-burst text-xl"></i>
-                <span class="text-xs font-bold">РАНИЛ</span>
+            <button onclick="commitResult(2)" class="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl hover:bg-rose-500/20 hover:border-rose-500/40 transition-all group">
+                <div class="text-[10px] uppercase tracking-widest text-rose-400 font-bold mb-1">Hit</div>
+                <div class="h-0.5 w-full bg-rose-900 group-hover:bg-rose-500 transition-all rounded-full"></div>
             </button>
-            <button onclick="commitResult(3)" class="p-4 rounded-xl bg-red-500/10 border border-red-500/50 text-red-500 hover:bg-red-500/20 transition-all flex flex-col items-center gap-2">
-                <i class="fas fa-skull text-xl"></i>
-                <span class="text-xs font-bold">УБИЛ</span>
+            <button onclick="commitResult(3)" class="p-4 bg-red-600/10 border border-red-600/20 rounded-xl hover:bg-red-600/20 hover:border-red-600/40 transition-all group">
+                <div class="text-[10px] uppercase tracking-widest text-red-500 font-bold mb-1">Kill</div>
+                <div class="h-0.5 w-full bg-red-900 group-hover:bg-red-500 transition-all rounded-full"></div>
             </button>
         </div>
     </div>
 
 <script>
+// --- CORE CONFIG ---
 const SIZE = 10;
 const STATE = { UNKNOWN: 0, MISS: 1, HIT: 2, SHIP: 3, SUNK: 4 };
 const COORDS = "АБВГДЕЖЗИК".split("");
-
-// Default config
 let SHIP_CONFIG = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
 
-let game = {
-    enemy: [],      
-    player: [],     
-    history: [],    
-    shipsLeft: [...SHIP_CONFIG],
-    turn: 0,
-    editMode: false
-};
-
+// --- STATE ---
+let game = { enemy: [], player: [], history: [], shipsLeft: [...SHIP_CONFIG], turn: 0, editMode: false };
 let probMap = [];
 let selectedTarget = null;
 let undoStack = [];
-let lastAiReason = "";
+let voiceEnabled = true; 
 
 function init() {
     createMatrices();
     generateSmartFleet(); 
     analyzeGame();
     renderAll();
+    speak("Система Квантум активна");
 }
 
 function createMatrices() {
@@ -486,16 +442,11 @@ function createMatrices() {
     probMap = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
 }
 
-// --- CONFIG & UI ---
+// --- UI HANDLERS ---
 function openSettings() {
-    // Populate current config
     const counts = {4:0, 3:0, 2:0, 1:0};
     SHIP_CONFIG.forEach(s => counts[s]++);
-    document.getElementById('conf-4').value = counts[4];
-    document.getElementById('conf-3').value = counts[3];
-    document.getElementById('conf-2').value = counts[2];
-    document.getElementById('conf-1').value = counts[1];
-    
+    [4,3,2,1].forEach(k => document.getElementById(`conf-${k}`).value = counts[k]);
     document.getElementById('settings-backdrop').classList.add('open');
     document.getElementById('settings-drawer').classList.add('open');
 }
@@ -506,129 +457,97 @@ function closeSettings() {
 }
 
 function applySettings() {
-    const c4 = parseInt(document.getElementById('conf-4').value) || 0;
-    const c3 = parseInt(document.getElementById('conf-3').value) || 0;
-    const c2 = parseInt(document.getElementById('conf-2').value) || 0;
-    const c1 = parseInt(document.getElementById('conf-1').value) || 0;
-    
-    let newConf = [];
-    for(let i=0; i<c4; i++) newConf.push(4);
-    for(let i=0; i<c3; i++) newConf.push(3);
-    for(let i=0; i<c2; i++) newConf.push(2);
-    for(let i=0; i<c1; i++) newConf.push(1);
-    
-    if (newConf.length === 0) {
-        alert("Добавьте хотя бы один корабль!");
-        return;
+    const next = [];
+    [4,3,2,1].forEach(k => {
+        const c = parseInt(document.getElementById(`conf-${k}`).value)||0;
+        for(let i=0; i<c; i++) next.push(k);
+    });
+    if(next.length) {
+        SHIP_CONFIG = next;
+        closeSettings();
+        undoStack = [];
+        game.history = [];
+        game.turn = 0;
+        game.shipsLeft = [...SHIP_CONFIG];
+        createMatrices();
+        generateSmartFleet();
+        analyzeGame();
+        renderAll();
     }
-    
-    SHIP_CONFIG = newConf;
-    closeSettings();
-    undoStack = [];
-    game.history = [];
-    game.turn = 0;
-    game.shipsLeft = [...SHIP_CONFIG];
-    init();
 }
 
-// --- RENDER ---
 function renderAll() {
     renderBoard(document.getElementById('grid-enemy'), game.enemy, true);
     renderBoard(document.getElementById('grid-player'), game.player, false);
     renderLogs();
     renderStats();
-    
-    document.getElementById('turn-counter').textContent = `ХОД ${game.turn}`;
+    document.getElementById('turn-counter').textContent = `SEQ: ${game.turn}`;
     document.getElementById('btn-undo').disabled = undoStack.length === 0;
     
     const editBtn = document.getElementById('btn-edit-mode');
-    const playerWrapper = document.getElementById('player-board-wrapper');
-    const editHint = document.getElementById('edit-hint');
-    const normalHint = document.getElementById('normal-hint');
-    
+    const playerBoard = document.getElementById('player-board-wrapper');
     if (game.editMode) {
-        editBtn.classList.add('bg-amber-600', 'text-white', 'border-amber-500');
-        editBtn.classList.remove('bg-slate-800', 'text-slate-400');
-        playerWrapper.classList.add('manual-mode', 'ring-2', 'ring-amber-500/50');
-        editHint.classList.remove('hidden');
-        normalHint.classList.add('hidden');
+        editBtn.className = "px-3 py-1.5 rounded bg-cyan-500/10 border border-cyan-500/50 text-[9px] font-bold uppercase tracking-wider text-cyan-400 transition-all";
+        playerBoard.style.borderColor = "#06b6d4";
+        playerBoard.style.boxShadow = "0 0 15px rgba(6, 182, 212, 0.1)";
     } else {
-        editBtn.classList.remove('bg-amber-600', 'text-white', 'border-amber-500');
-        editBtn.classList.add('bg-slate-800', 'text-slate-400');
-        playerWrapper.classList.remove('manual-mode', 'ring-2', 'ring-amber-500/50');
-        editHint.classList.add('hidden');
-        normalHint.classList.remove('hidden');
+        editBtn.className = "px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 text-[9px] font-bold uppercase tracking-wider text-neutral-400 hover:text-white transition-all";
+        playerBoard.style.borderColor = "rgba(255,255,255,0.05)";
+        playerBoard.style.boxShadow = "none";
     }
 }
 
 function renderStats() {
-    // Enemy Stats
-    const enemyContainer = document.getElementById('enemy-stats');
-    enemyContainer.innerHTML = '';
-    // Group remaining ships by size
-    const enemyCounts = {};
-    game.shipsLeft.forEach(s => enemyCounts[s] = (enemyCounts[s]||0)+1);
-    
-    // Config counts for placeholders
-    const totalCounts = {};
-    SHIP_CONFIG.forEach(s => totalCounts[s] = (totalCounts[s]||0)+1);
-    
-    [4, 3, 2, 1].forEach(size => {
-        if (!totalCounts[size]) return;
-        for(let i=0; i<totalCounts[size]; i++) {
-            const isAlive = i < (enemyCounts[size] || 0);
-            const group = mk('div', `ship-group ${isAlive ? '' : 'dead'}`);
-            for(let k=0; k<size; k++) group.appendChild(mk('div', 'ship-pip enemy-active'));
-            enemyContainer.appendChild(group);
+    const d1 = document.getElementById('enemy-stats'); d1.innerHTML='';
+    const d2 = document.getElementById('player-stats'); d2.innerHTML='';
+    const counts = {}; game.shipsLeft.forEach(x => counts[x]=(counts[x]||0)+1);
+    const totalCounts = {}; SHIP_CONFIG.forEach(x => totalCounts[x]=(totalCounts[x]||0)+1);
+
+    [4,3,2,1].forEach(k => {
+        if(!totalCounts[k]) return;
+        const g = mk('div', 'stat-group');
+        for(let i=0; i<totalCounts[k]; i++) {
+            const alive = i < (counts[k]||0);
+            const ship = mk('div', 'flex gap-px');
+            for(let p=0; p<k; p++) ship.appendChild(mk('div', `ship-pip ${alive ? 'enemy-active' : 'opacity-20'}`));
+            if(i < totalCounts[k]-1) ship.style.marginRight = '4px';
+            g.appendChild(ship);
         }
+        d1.appendChild(g);
     });
 
-    // Player Stats (Calc from board)
-    const playerContainer = document.getElementById('player-stats');
-    playerContainer.innerHTML = '';
-    
-    // Simple approach: calculate connected components on player board
-    // Note: This is an approximation for visual aid.
-    const playerShips = calcPlayerShips(); // returns array of sizes
-    const pCounts = {};
-    playerShips.forEach(s => pCounts[s] = (pCounts[s]||0)+1);
-    
-    [4, 3, 2, 1].forEach(size => {
-        if (!totalCounts[size]) return;
-        for(let i=0; i<totalCounts[size]; i++) {
-            const isAlive = i < (pCounts[size] || 0);
-            const group = mk('div', `ship-group ${isAlive ? '' : 'dead'}`);
-            for(let k=0; k<size; k++) group.appendChild(mk('div', 'ship-pip active'));
-            playerContainer.appendChild(group);
+    const pShips = calcPlayerShips(); 
+    const pCounts = {}; pShips.forEach(x => pCounts[x]=(pCounts[x]||0)+1);
+    [4,3,2,1].forEach(k => {
+        if(!totalCounts[k]) return;
+        const g = mk('div', 'stat-group');
+        for(let i=0; i<totalCounts[k]; i++) {
+            const alive = i < (pCounts[k]||0);
+            const ship = mk('div', 'flex gap-px');
+            for(let p=0; p<k; p++) ship.appendChild(mk('div', `ship-pip ${alive ? 'active' : 'opacity-20'}`));
+            if(i < totalCounts[k]-1) ship.style.marginRight = '4px';
+            g.appendChild(ship);
         }
+        d2.appendChild(g);
     });
 }
 
 function calcPlayerShips() {
-    let visited = Array(SIZE).fill().map(() => Array(SIZE).fill(false));
+    let visited = Array(SIZE).fill().map(()=>Array(SIZE).fill(false));
     let ships = [];
-    
-    for(let r=0; r<SIZE; r++) {
-        for(let c=0; c<SIZE; c++) {
-            if (game.player[r][c] === STATE.SHIP && !visited[r][c]) {
-                // BFS to find ship size
-                let size = 0;
-                let q = [{r,c}];
-                visited[r][c] = true;
-                while(q.length) {
-                    let curr = q.pop();
-                    size++;
-                    [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr, dc]) => {
-                        let nr=curr.r+dr, nc=curr.c+dc;
-                        if(nr>=0 && nr<10 && nc>=0 && nc<10 && 
-                           game.player[nr][nc] === STATE.SHIP && !visited[nr][nc]) {
-                            visited[nr][nc] = true;
-                            q.push({r:nr, c:nc});
-                        }
-                    });
-                }
-                ships.push(size);
+    for(let r=0; r<SIZE; r++) for(let c=0; c<SIZE; c++) {
+        if(game.player[r][c]===STATE.SHIP && !visited[r][c]) {
+            let size=0, q=[{r,c}]; visited[r][c]=true;
+            while(q.length) {
+                let curr=q.pop(); size++;
+                [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr,dc])=>{
+                    let nr=curr.r+dr, nc=curr.c+dc;
+                    if(nr>=0 && nr<SIZE && nc>=0 && nc<SIZE && game.player[nr][nc]===STATE.SHIP && !visited[nr][nc]) {
+                        visited[nr][nc]=true; q.push({r:nr,c:nc});
+                    }
+                });
             }
+            ships.push(size);
         }
     }
     return ships;
@@ -639,51 +558,31 @@ function renderBoard(container, matrix, isEnemy) {
     container.appendChild(mk('div', 'coord-label', ''));
     for(let i=1; i<=10; i++) container.appendChild(mk('div', 'coord-label', i));
     
+    let max = 0;
+    if(isEnemy) probMap.forEach(r => r.forEach(v => max = Math.max(max, v)));
+
     for(let r=0; r<SIZE; r++) {
         container.appendChild(mk('div', 'coord-label', COORDS[r]));
         for(let c=0; c<SIZE; c++) {
             const val = matrix[r][c];
             const cell = document.createElement('div');
             cell.className = 'cell';
-            
             if (val === STATE.MISS) cell.classList.add('miss');
             else if (val === STATE.HIT) cell.classList.add('hit');
             else if (val === STATE.SUNK) cell.classList.add('sunk');
             else if (val === STATE.SHIP) cell.classList.add('ship');
             
-            cell.onclick = () => handleCellClick(r, c, isEnemy);
-            
-            if (isEnemy && val === STATE.UNKNOWN && probMap[r] && probMap[r][c] > 0) {
+            if (isEnemy && val === STATE.UNKNOWN && probMap[r][c] > 0) {
                 const heat = mk('div', 'heat-overlay');
-                let max = 0;
-                probMap.forEach(row => row.forEach(v => max = Math.max(max, v)));
-                if(max > 0) heat.style.opacity = (probMap[r][c] / max) * 0.9;
+                const opacity = (probMap[r][c] / max);
+                heat.style.opacity = opacity;
                 cell.appendChild(heat);
+                if (probMap[r][c] === max && max > 0) cell.classList.add('best-move');
             }
-            
-            if (isEnemy && val === STATE.UNKNOWN && isBestMove(r, c)) {
-                cell.classList.add('best-move');
-            }
+            cell.onclick = () => handleCellClick(r, c, isEnemy);
             container.appendChild(cell);
         }
     }
-}
-
-function renderLogs() {
-    const mobileLog = document.getElementById('log-mobile');
-    const deskLog = document.getElementById('log-desktop');
-    const html = game.history.map((entry, i) => {
-        let colorClass = 'text-slate-400';
-        let prefix = '';
-        if(entry.type === 'HIT') colorClass = 'hit';
-        if(entry.type === 'SUNK') colorClass = 'sunk';
-        if(entry.type === 'MISS') colorClass = 'miss';
-        if(entry.type === 'SYS') colorClass = 'sys';
-        if(entry.type.includes('ENEMY')) { colorClass += ' enemy'; prefix = '<i class="fas fa-robot mr-1 opacity-50"></i>'; }
-        return `<div class="log-item ${colorClass}"><span class="opacity-50 text-[10px] mr-2">#${game.history.length - i}</span><span>${prefix}${entry.text}</span></div>`;
-    }).reverse().join(''); 
-    mobileLog.innerHTML = html;
-    deskLog.innerHTML = html;
 }
 
 function mk(tag, cls, content) {
@@ -693,13 +592,19 @@ function mk(tag, cls, content) {
     return el;
 }
 
-// --- INTERACTION ---
 function handleCellClick(r, c, isEnemy) {
     if (isEnemy) {
         if (game.enemy[r][c] !== STATE.UNKNOWN) return;
         selectedTarget = {r, c};
-        document.getElementById('drawer-coord').textContent = `${COORDS[r]}${c+1}`;
-        openDrawer();
+        if(navigator.vibrate) navigator.vibrate(5);
+        
+        const coordName = `${COORDS[r]}${c+1}`;
+        document.getElementById('drawer-coord').textContent = coordName;
+        
+        speak(`Атакую ${COORDS[r]} ${c+1}`);
+        
+        document.getElementById('action-backdrop').classList.add('open');
+        document.getElementById('action-drawer').classList.add('open');
     } else {
         if (game.editMode) {
             const curr = game.player[r][c];
@@ -710,15 +615,14 @@ function handleCellClick(r, c, isEnemy) {
         } else {
             pushState();
             const curr = game.player[r][c];
-            const coordStr = `${COORDS[r]}${c+1}`;
             if (curr === STATE.UNKNOWN) {
                 game.player[r][c] = STATE.MISS;
-                addLog(`Враг (Мимо): ${coordStr}`, 'MISS_ENEMY');
+                addLog(`ВРАГ: ${COORDS[r]}${c+1} > МИМО`);
             } else if (curr === STATE.MISS) {
                 game.player[r][c] = STATE.HIT; 
             } else if (curr === STATE.SHIP) {
                 game.player[r][c] = STATE.HIT;
-                addLog(`Враг (ПОПАЛ!): ${coordStr}`, 'HIT_ENEMY');
+                addLog(`ВРАГ: ${COORDS[r]}${c+1} > ПОПАДАНИЕ`);
             } else if (curr === STATE.HIT) {
                 game.player[r][c] = STATE.UNKNOWN; 
             }
@@ -732,13 +636,8 @@ function toggleEditMode() {
     renderAll();
 }
 
-function openDrawer() {
-    document.getElementById('drawer-backdrop').classList.add('open');
-    document.getElementById('action-drawer').classList.add('open');
-}
-
 function closeDrawer() {
-    document.getElementById('drawer-backdrop').classList.remove('open');
+    document.getElementById('action-backdrop').classList.remove('open');
     document.getElementById('action-drawer').classList.remove('open');
     selectedTarget = null;
 }
@@ -746,23 +645,21 @@ function closeDrawer() {
 function commitResult(resultCode) {
     if (!selectedTarget) return;
     pushState();
-    
     const {r, c} = selectedTarget;
-    const coordStr = `${COORDS[r]}${c+1}`;
     game.turn++;
+    const txt = `${COORDS[r]}${c+1}`;
 
     if (resultCode === 1) { 
         game.enemy[r][c] = STATE.MISS;
-        addLog(`Я: ${coordStr} - Мимо`, 'MISS');
+        addLog(`Я: ${txt} > ПРОМАХ`);
     } else if (resultCode === 2) { 
         game.enemy[r][c] = STATE.HIT;
-        addLog(`Я: ${coordStr} - РАНЕН`, 'HIT');
+        addLog(`Я: ${txt} > ЕСТЬ ПРОБИТИЕ`);
     } else if (resultCode === 3) { 
         game.enemy[r][c] = STATE.HIT; 
-        const sunkCells = markSunkShip(r, c);
-        const size = sunkCells.length;
-        removeShipFromTracker(size);
-        addLog(`Я: ${coordStr} - УБИЛ (${size}-палубный)`, 'SUNK');
+        const sunk = markSunk(r, c);
+        removeFromLeft(sunk.length);
+        addLog(`Я: ${txt} > УНИЧТОЖЕН [${sunk.length}]`);
     }
 
     closeDrawer();
@@ -770,341 +667,192 @@ function commitResult(resultCode) {
     renderAll();
 }
 
-function markSunkShip(startR, startC) {
+function markSunk(startR, startC) {
     let stack = [{r: startR, c: startC}];
     let visited = new Set();
     let shipCells = [];
-    const key = (r,c) => `${r},${c}`;
-
     while(stack.length) {
         const {r, c} = stack.pop();
-        const k = key(r,c);
+        const k = `${r},${c}`;
         if(visited.has(k)) continue;
         visited.add(k);
-        
         if (game.enemy[r][c] === STATE.HIT || game.enemy[r][c] === STATE.SUNK) { 
             shipCells.push({r, c});
             [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr, dc]) => {
                 const nr=r+dr, nc=c+dc;
-                if(nr>=0 && nr<10 && nc>=0 && nc<10) stack.push({r:nr, c:nc});
+                if(nr>=0 && nr<SIZE && nc>=0 && nc<SIZE) stack.push({r:nr, c:nc});
             });
         }
     }
-
     shipCells.forEach(({r, c}) => {
         game.enemy[r][c] = STATE.SUNK;
-        // Halo
-        for(let dr=-1; dr<=1; dr++) {
-            for(let dc=-1; dc<=1; dc++) {
-                const nr=r+dr, nc=c+dc;
-                if(nr>=0 && nr<10 && nc>=0 && nc<10) {
-                    if (game.enemy[nr][nc] === STATE.UNKNOWN) {
-                        game.enemy[nr][nc] = STATE.MISS; 
-                    }
-                }
-            }
+        for(let dr=-1; dr<=1; dr++) for(let dc=-1; dc<=1; dc++) {
+            const nr=r+dr, nc=c+dc;
+            if(nr>=0 && nr<SIZE && nc>=0 && nc<SIZE && game.enemy[nr][nc] === STATE.UNKNOWN) game.enemy[nr][nc] = STATE.MISS;
         }
     });
     return shipCells;
 }
 
-function removeShipFromTracker(size) {
+function removeFromLeft(size) {
     const idx = game.shipsLeft.indexOf(size);
-    if(idx !== -1) {
-        game.shipsLeft.splice(idx, 1);
-    } else {
-        let closestIdx = -1;
-        let minDiff = 100;
+    if(idx !== -1) game.shipsLeft.splice(idx, 1);
+    else {
+        let closest = -1, minDiff = 100;
         game.shipsLeft.forEach((s, i) => {
-            if(Math.abs(s - size) < minDiff) {
-                minDiff = Math.abs(s - size);
-                closestIdx = i;
-            }
+            if(Math.abs(s-size)<minDiff) { minDiff=Math.abs(s-size); closest=i; }
         });
-        if(closestIdx !== -1) game.shipsLeft.splice(closestIdx, 1);
+        if(closest !== -1) game.shipsLeft.splice(closest, 1);
     }
 }
 
-// --- V21 GOD MODE ALGORITHM ---
+// --- QUANTUM ENGINE (PDF + CSP) ---
 
 function analyzeGame() {
-    const deadMask = buildIslandMask();
     probMap = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
-    const activeHits = [];
-    for(let r=0; r<SIZE; r++) {
-        for(let c=0; c<SIZE; c++) {
-            if (game.enemy[r][c] === STATE.HIT) activeHits.push({r, c});
-        }
-    }
+    const hits = [];
+    for(let r=0; r<SIZE; r++) for(let c=0; c<SIZE; c++) if(game.enemy[r][c] === STATE.HIT) hits.push({r,c});
 
-    let mode = 'SEARCH';
-    if (activeHits.length > 0) mode = 'TARGET';
-
+    let mode = hits.length > 0 ? 'KILL' : 'SEARCH';
     const badge = document.getElementById('ai-badge');
-    if (mode === 'TARGET') {
-        badge.textContent = 'GOD LOCK';
-        badge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-red-500/10 text-red-400 border border-red-500/20 animate-pulse';
-        lastAiReason = "Абсолютная точность";
+    if(mode === 'KILL') {
+        badge.textContent = 'TARGET LOCKED';
+        badge.style.color = '#f43f5e';
+        badge.style.borderColor = 'rgba(244, 63, 94, 0.3)';
+        badge.style.backgroundColor = 'rgba(244, 63, 94, 0.1)';
     } else {
-        badge.textContent = 'MONTE-CARLO';
-        badge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20';
-        lastAiReason = "Квантовая симуляция";
+        badge.textContent = 'SCANNING';
+        badge.style.color = '#22d3ee';
+        badge.style.borderColor = 'rgba(34, 211, 238, 0.3)';
+        badge.style.backgroundColor = 'rgba(34, 211, 238, 0.1)';
     }
 
-    let axisLock = null; 
-    let vectorBounds = null;
-    
-    if (activeHits.length >= 2) {
-        const rows = new Set(activeHits.map(h => h.r));
-        const cols = new Set(activeHits.map(h => h.c));
-        if (rows.size === 1) {
-            axisLock = 'row';
-            const cs = activeHits.map(h => h.c).sort((a,b)=>a-b);
-            vectorBounds = { type: 'row', r: [...rows][0], minC: cs[0], maxC: cs[cs.length-1] };
-            lastAiReason = "Вектор X";
-        } else if (cols.size === 1) {
-            axisLock = 'col';
-            const rs = activeHits.map(h => h.r).sort((a,b)=>a-b);
-            vectorBounds = { type: 'col', c: [...cols][0], minR: rs[0], maxR: rs[rs.length-1] };
-            lastAiReason = "Вектор Y";
-        }
-    }
-
-    // 2. God Mode Superposition
-    game.shipsLeft.forEach(shipSize => {
-        const sizeWeight = shipSize * 2;
-        // Horizontal
+    game.shipsLeft.forEach(len => {
+        // Horizontal scan
         for(let r=0; r<SIZE; r++) {
-            for(let c=0; c<=SIZE-shipSize; c++) {
-                if(canPlaceShipHypothetically(r, c, shipSize, false, activeHits, mode, axisLock, vectorBounds)) {
-                    for(let i=0; i<shipSize; i++) {
-                        if (!deadMask[r][c+i]) {
-                            let val = (axisLock ? 1000 : sizeWeight);
-                            // Monte-Carlo Space Analysis
-                            if (mode === 'SEARCH') val += countOpenSpace(r, c+i);
-                            probMap[r][c+i] += val;
-                        }
-                    }
+            for(let c=0; c<=SIZE-len; c++) {
+                if(isValidPlacement(r, c, len, false, hits)) {
+                    const weight = calculateWeight(r, c, len, false, hits, mode);
+                    for(let i=0; i<len; i++) probMap[r][c+i] += weight;
                 }
             }
         }
-        // Vertical
-        for(let r=0; r<=SIZE-shipSize; r++) {
+        // Vertical scan
+        for(let r=0; r<=SIZE-len; r++) {
             for(let c=0; c<SIZE; c++) {
-                if(canPlaceShipHypothetically(r, c, shipSize, true, activeHits, mode, axisLock, vectorBounds)) {
-                    for(let i=0; i<shipSize; i++) {
-                        if (!deadMask[r+i][c]) {
-                            let val = (axisLock ? 1000 : sizeWeight);
-                            if (mode === 'SEARCH') val += countOpenSpace(r+i, c);
-                            probMap[r+i][c] += val;
-                        }
-                    }
+                if(isValidPlacement(r, c, len, true, hits)) {
+                    const weight = calculateWeight(r, c, len, true, hits, mode);
+                    for(let i=0; i<len; i++) probMap[r+i][c] += weight;
                 }
             }
         }
     });
+
+    let max = 0, best = null, total = 0;
+    for(let r=0; r<SIZE; r++) for(let c=0; c<SIZE; c++) {
+        if(game.enemy[r][c] !== STATE.UNKNOWN) probMap[r][c] = 0;
+        if(probMap[r][c] > max) { max = probMap[r][c]; best = {r,c}; }
+        total += probMap[r][c];
+    }
     
-    // Adaptive Grid (Parity shifting based on smallest ship)
-    const minShip = Math.min(...game.shipsLeft);
-    if (mode === 'SEARCH' && minShip > 1) {
-        lastAiReason += " | Адаптивная сеть";
-        for(let r=0; r<SIZE; r++) {
-            for(let c=0; c<SIZE; c++) {
-                // If minShip is 3, check mod 3. If 2, check mod 2.
-                if ((r+c) % minShip !== 0) probMap[r][c] = 0; 
-            }
-        }
-    }
-
-    updateSuggestion();
-}
-
-function countOpenSpace(r, c) {
-    let open = 0;
-    [[-1,0],[1,0],[0,-1],[0,1],[-2,0],[2,0],[0,-2],[0,2]].forEach(([dr, dc]) => {
-        let nr=r+dr, nc=c+dc;
-        if(nr>=0 && nr<10 && nc>=0 && nc<10 && game.enemy[nr][nc] === STATE.UNKNOWN) open++;
-    });
-    return open * 0.5;
-}
-
-function buildIslandMask() {
-    const minShip = Math.min(...game.shipsLeft);
-    if (!minShip || minShip <= 1) return Array(SIZE).fill().map(() => Array(SIZE).fill(false)); 
-    let mask = Array(SIZE).fill().map(() => Array(SIZE).fill(false)); 
-    let visited = Array(SIZE).fill().map(() => Array(SIZE).fill(false));
-    for(let r=0; r<SIZE; r++) {
-        for(let c=0; c<SIZE; c++) {
-            if (game.enemy[r][c] === STATE.UNKNOWN && !visited[r][c]) {
-                let q = [{r,c}];
-                visited[r][c] = true;
-                let island = [{r,c}];
-                let head = 0;
-                while(head < q.length) {
-                    let curr = q[head++];
-                    [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr, dc]) => {
-                        let nr=curr.r+dr, nc=curr.c+dc;
-                        if(nr>=0 && nr<10 && nc>=0 && nc<10 && game.enemy[nr][nc] === STATE.UNKNOWN && !visited[nr][nc]) {
-                            visited[nr][nc] = true;
-                            q.push({r:nr, c:nc});
-                            island.push({r:nr, c:nc});
-                        }
-                    });
-                }
-                if (island.length < minShip) island.forEach(cell => mask[cell.r][cell.c] = true);
-            }
-        }
-    }
-    return mask;
-}
-
-function canPlaceShipHypothetically(r, c, size, vert, activeHits, mode, axisLock, vectorBounds) {
-    let intersectsActiveHit = false;
-    for(let i=0; i<size; i++) {
-        let nr = vert ? r+i : r;
-        let nc = vert ? c : c+i;
-        const cell = game.enemy[nr][nc];
-        if (cell === STATE.MISS || cell === STATE.SUNK) return false;
-        if (cell === STATE.HIT) intersectsActiveHit = true;
-    }
-    if (mode === 'TARGET') {
-        if (!intersectsActiveHit) return false;
-        if (vectorBounds) {
-            if (vectorBounds.type === 'row' && vert) return false;
-            if (vectorBounds.type === 'col' && !vert) return false;
-        }
-        return true;
-    }
-    return true; 
-}
-
-function isBestMove(r, c) {
-    if (!probMap || !probMap[r]) return false;
-    let max = -1;
-    for(let rr=0; rr<SIZE; rr++) {
-        for(let cc=0; cc<SIZE; cc++) {
-            if (game.enemy[rr][cc] === STATE.UNKNOWN) {
-                if (probMap[rr][cc] > max) max = probMap[rr][cc];
-            }
-        }
-    }
-    return max > 0 && probMap[r][c] === max;
-}
-
-function updateSuggestion() {
-    let max = -1;
-    let best = null;
-    for(let r=0; r<SIZE; r++) {
-        for(let c=0; c<SIZE; c++) {
-            if (game.enemy[r][c] === STATE.UNKNOWN) {
-                if (probMap[r][c] > max) {
-                    max = probMap[r][c];
-                    best = {r, c};
-                }
-            }
-        }
-    }
     const sugEl = document.getElementById('suggestion');
     if (best) {
-        sugEl.innerHTML = `Рекомендую: <span class="text-white font-bold">${COORDS[best.r]}${best.c+1}</span>`;
-        let total = 0;
-        probMap.forEach(r => r.forEach(v => total += v));
-        const percent = total > 0 ? Math.round((max / total) * 100 * 3) : 0; 
-        document.getElementById('prob-max').textContent = `${Math.min(99, percent)}% | ${lastAiReason}`;
+        sugEl.innerHTML = `ЦЕЛЬ: <span class="text-cyan-400 font-bold">${COORDS[best.r]}${best.c+1}</span>`;
+        const p = total > 0 ? (max/total)*100 : 0;
+        document.getElementById('prob-max').textContent = `${Math.min(99, p.toFixed(0))}%`;
     } else {
-        sugEl.innerHTML = `<span class="text-green-400">ПОБЕДА?</span>`;
-        document.getElementById('prob-max').textContent = `ВЕРОЯТНОСТЬ: 0%`;
+        sugEl.textContent = "ОЖИДАНИЕ";
+        document.getElementById('prob-max').textContent = "0%";
     }
 }
 
-// --- V21 ASYMMETRIC PLACEMENT ---
+function isValidPlacement(r, c, size, vert, hits) {
+    const shipCoords = [];
+    for(let i=0; i<size; i++) {
+        const nr=vert?r+i:r, nc=vert?c:c+i;
+        if(game.enemy[nr][nc] === STATE.MISS || game.enemy[nr][nc] === STATE.SUNK) return false;
+        shipCoords.push({r:nr, c:nc});
+    }
+    return true;
+}
+
+function calculateWeight(r, c, size, vert, hits, mode) {
+    let hitOverlaps = 0;
+    for(let i=0; i<size; i++) {
+        const nr=vert?r+i:r, nc=vert?c:c+i;
+        if(game.enemy[nr][nc] === STATE.HIT) hitOverlaps++;
+    }
+
+    if (mode === 'KILL') {
+        if (hitOverlaps === 0) return 0;
+        
+        if (hits.length >= 2) {
+            const rows = new Set(hits.map(h=>h.r));
+            const cols = new Set(hits.map(h=>h.c));
+            if (rows.size === 1 && cols.size > 1 && vert) return 0; 
+            if (cols.size === 1 && rows.size > 1 && !vert) return 0;
+        }
+        return 1000 + (hitOverlaps * 500);
+    } else {
+        if (hitOverlaps > 0) return 0;
+        
+        let weight = 10;
+        const minShip = Math.min(...game.shipsLeft);
+        if ((r+c) % minShip === 0) weight += 50;
+        if (r>0 && r<9 && c>0 && c<9) weight += 15;
+        if (r>2 && r<7 && c>2 && c<7) weight += 10;
+
+        return weight;
+    }
+}
+
 function generateSmartFleet() {
+    game.player = Array(SIZE).fill().map(() => Array(SIZE).fill(STATE.UNKNOWN));
     const ships = [...SHIP_CONFIG].sort((a,b) => b-a);
-    let bestBoard = null;
-    let bestScore = -Infinity;
+    const heat = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
     
-    // We want some clustering (asymmetry) to confuse logic that expects spread
-    for(let gen=0; gen<50; gen++) {
-        let tempBoard = createRandomFleet(ships);
-        if (tempBoard) {
-            let score = evaluateAsymmetry(tempBoard);
-            if (score > bestScore) {
-                bestScore = score;
-                bestBoard = tempBoard;
+    for(let r=0; r<SIZE; r++) for(let c=0; c<SIZE; c++) if(r===0||r===9||c===0||c===9) heat[r][c]=10;
+
+    for(let size of ships) {
+        let placed = false, k=0;
+        while(!placed && k<200) {
+            k++;
+            const v = Math.random()>0.5;
+            const r = Math.floor(Math.random()*SIZE);
+            const c = Math.floor(Math.random()*SIZE);
+            
+            if(checkSimPlacement(game.player, r, c, size, v)) {
+                let hVal = 0;
+                for(let m=0; m<size; m++) hVal += heat[v?r+m:r][v?c:c+m];
+                
+                if(hVal < 15 || k>150) {
+                    for(let m=0; m<size; m++) {
+                        const nr=v?r+m:r, nc=v?c:c+m;
+                        game.player[nr][nc] = STATE.SHIP;
+                        for(let x=-2; x<=2; x++) for(let y=-2; y<=2; y++) {
+                             if(nr+x>=0 && nr+x<SIZE && nc+y>=0 && nc+y<SIZE) heat[nr+x][nc+y] += 5;
+                        }
+                    }
+                    placed = true;
+                }
             }
         }
     }
+    renderAll();
+}
 
-    if (bestBoard) {
-        game.player = bestBoard;
-        renderAll();
-        addLog(`Флот: Асимметрия (Score:${Math.floor(bestScore)})`, 'SYS');
+function checkSimPlacement(board, r, c, size, vert) {
+    if(vert) {
+        if(r+size > SIZE) return false;
+        for(let i=-1; i<=size; i++) for(let j=-1; j<=1; j++) {
+            const nr=r+i, nc=c+j;
+            if(nr>=0 && nr<SIZE && nc>=0 && nc<SIZE && board[nr][nc] === STATE.SHIP) return false;
+        }
     } else {
-        alert("Не удалось построить флот. Проверьте настройки количества кораблей.");
-    }
-}
-
-function createRandomFleet(ships) {
-    let board = Array(SIZE).fill().map(() => Array(SIZE).fill(STATE.UNKNOWN));
-    for (let size of ships) {
-        let placed = false;
-        let attempts = 0;
-        while (!placed && attempts < 100) {
-            attempts++;
-            const r = Math.floor(Math.random() * 10);
-            const c = Math.floor(Math.random() * 10);
-            const vert = Math.random() > 0.5;
-            if (canPlaceStrict(board, r, c, size, vert)) {
-                for(let i=0; i<size; i++) {
-                    if(vert) board[r+i][c] = STATE.SHIP;
-                    else board[r][c+i] = STATE.SHIP;
-                }
-                placed = true;
-            }
-        }
-        if (!placed) return null;
-    }
-    return board;
-}
-
-function evaluateAsymmetry(board) {
-    // Calculate mass center
-    let rSum = 0, cSum = 0, count = 0;
-    for(let r=0; r<SIZE; r++) {
-        for(let c=0; c<SIZE; c++) {
-            if (board[r][c] === STATE.SHIP) {
-                rSum += r; cSum += c; count++;
-            }
-        }
-    }
-    if (count === 0) return 0;
-    
-    // Distance from center (4.5, 4.5)
-    const cR = rSum/count; 
-    const cC = cSum/count;
-    
-    // We prefer mass center to be OFFSET from the board center (Asymmetry)
-    const distFromCenter = Math.sqrt(Math.pow(cR - 4.5, 2) + Math.pow(cC - 4.5, 2));
-    
-    // Also add randomness to avoid same corner every time
-    return distFromCenter + Math.random() * 2;
-}
-
-function canPlaceStrict(board, r, c, size, vert) {
-    if (vert) { if (r + size > 10) return false; } 
-    else { if (c + size > 10) return false; }
-
-    for (let i = 0; i < size; i++) {
-        let currR = vert ? r + i : r;
-        let currC = vert ? c : c + i;
-        for (let dr = -1; dr <= 1; dr++) {
-            for (let dc = -1; dc <= 1; dc++) {
-                let nr = currR + dr;
-                let nc = currC + dc;
-                if (nr >= 0 && nr < 10 && nc >= 0 && nc < 10) {
-                    if (board[nr][nc] === STATE.SHIP) return false;
-                }
-            }
+        if(c+size > SIZE) return false;
+        for(let i=-1; i<=1; i++) for(let j=-1; j<=size; j++) {
+            const nr=r+i, nc=c+j;
+            if(nr>=0 && nr<SIZE && nc>=0 && nc<SIZE && board[nr][nc] === STATE.SHIP) return false;
         }
     }
     return true;
@@ -1115,44 +863,58 @@ function clearPlayerBoard() {
     renderAll();
 }
 
-function addLog(text, type) {
-    game.history.push({text, type});
+function addLog(text) {
+    game.history.push(text);
+    renderLogs();
+}
+
+function renderLogs() {
+    const el = document.getElementById('log-mobile');
+    const el2 = document.getElementById('log-desktop');
+    if (!el || !el2) return;
+    const html = game.history.map((t,i) => `<div class="log-item"><span class="text-cyan-500/50 mr-2">#${game.history.length-i}</span><span>${t.replace('>', '<span class="text-neutral-600">></span>')}</span></div>`).reverse().join('');
+    el.innerHTML = html;
+    el2.innerHTML = html;
 }
 
 function pushState() {
-    const state = JSON.stringify({
-        enemy: game.enemy,
-        player: game.player,
-        shipsLeft: game.shipsLeft,
-        turn: game.turn,
-        history: game.history
-    });
-    undoStack.push(state);
-    if (undoStack.length > 50) undoStack.shift();
+    undoStack.push(JSON.stringify(game));
+    if(undoStack.length > 20) undoStack.shift();
     document.getElementById('btn-undo').disabled = false;
 }
 
 function undo() {
-    if (undoStack.length === 0) return;
-    const prev = JSON.parse(undoStack.pop());
-    game.enemy = prev.enemy;
-    game.player = prev.player;
-    game.shipsLeft = prev.shipsLeft;
-    game.turn = prev.turn;
-    game.history = prev.history;
+    if(undoStack.length === 0) return;
+    game = JSON.parse(undoStack.pop());
     analyzeGame();
     renderAll();
 }
 
-function resetGame() {
-    window.location.reload();
+function scrollToSection(sec) {
+    document.getElementById(sec==='attack'?'section-attack':'section-defense').scrollIntoView({behavior:'smooth'});
 }
 
-function scrollToSection(sec) {
-    if(sec === 'attack') {
-        document.getElementById('section-attack').scrollIntoView({behavior: 'smooth'});
-    } else {
-        document.getElementById('section-defense').scrollIntoView({behavior: 'smooth'});
+function speak(text) {
+    if(!voiceEnabled) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ru-RU';
+    u.pitch = 0.9; 
+    u.rate = 1.1;
+    window.speechSynthesis.speak(u);
+}
+
+function resetGame() {
+    if(confirm('SYSTEM RESET?')) {
+        createMatrices();
+        game.history = [];
+        game.turn = 0;
+        game.shipsLeft = [...SHIP_CONFIG];
+        undoStack = [];
+        generateSmartFleet();
+        analyzeGame();
+        renderAll();
+        speak("Система перезагружена");
     }
 }
 
