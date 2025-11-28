@@ -3,1117 +3,1008 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BS Assist: v12.1 PREDATOR</title>
+    <title>BS Assist: v20 OMEGA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
     
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617',
+                        },
+                        fuchsia: {
+                            450: '#c026d3', /* Omega Fuchsia */
+                            550: '#a21caf',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'scan': 'scan 3s linear infinite',
+                    },
+                    keyframes: {
+                        scan: {
+                            '0%': { transform: 'translateY(-100%)' },
+                            '100%': { transform: 'translateY(100%)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
         :root {
-            --bg-page: #171717;      /* neutral-900 */
-            --bg-panel: #262626;     /* neutral-800 */
-            --grid-border: #404040;  /* neutral-700 */
-            --cell-empty: #262626;   /* neutral-800 */
-            --cell-hover: #404040;   /* neutral-700 */
-            --text-primary: #f5f5f5;  /* neutral-100 */
-            --text-secondary: #a3a3a3; /* neutral-400 */
+            --bg-page: #0f172a;      
+            --bg-panel: #1e293b;     
+            --grid-line: #334155;    
+            --cell-bg: #1e293b;
+            --cell-hover: #334155;
             
-            --color-miss: #737373;   /* neutral-500 */
-            --color-hit: #f59e0b;    /* amber-500 */
-            --color-target: #ef4444; /* red-500 */
-            --color-ship: #3b82f6;   /* blue-500 */
+            --text-main: #f8fafc;    
+            --text-muted: #94a3b8;   
             
-            --color-ai: var(--color-ship);
-            --color-ai-seek: var(--color-hit);
+            --col-ship: #c026d3;     /* Omega Theme: Fuchsia */
+            --col-hit: #f59e0b;      
+            --col-miss: #475569;     
+            --col-sunk: #ef4444;     
+            --col-target: #ef4444;
+            
+            --col-ai-heat: rgba(192, 38, 211, 0.5); /* Omega Heat */
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden; 
         }
 
         body {
             background-color: var(--bg-page);
-            color: var(--text-primary);
+            color: var(--text-main);
             font-family: 'Inter', sans-serif;
-            height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* ... (остальные стили V11 идентичны) ... */
-        /* Кнопки */
-        .btn {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            font-weight: 500; 
-            border-radius: 0.5rem; 
+        /* Scrollable areas */
+        .scroll-area {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: #334155 transparent;
         }
-        .btn:active { transform: scale(0.96); }
-        .btn-header {
-            background-color: var(--bg-panel);
-            color: var(--text-secondary);
-            border: 1px solid var(--grid-border);
-        }
-        .btn-header:hover {
-            background-color: var(--cell-hover);
-            color: var(--text-primary);
-        }
-        .btn-header:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            background-color: var(--bg-panel);
-        }
-        
-        .btn-action {
-            background-color: var(--bg-panel);
-            color: var(--text-primary);
-            border: 1px solid var(--grid-border);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
-            border-radius: 0.75rem; /* 12px */
-            font-weight: 600;
-        }
-        .btn-action.hit {
-            border-color: var(--color-hit);
-            color: var(--color-hit);
-        }
-        .btn-action.hit:hover { background-color: rgba(245, 158, 11, 0.1); }
-        
-        .btn-action.sunk {
-            border-color: var(--color-target);
-            color: var(--color-target);
-        }
-        .btn-action.sunk:hover { background-color: rgba(239, 68, 68, 0.1); }
-        
-        .btn-action.miss {
-             border-color: var(--color-miss);
-             color: var(--color-miss);
-        }
-        .btn-action.miss:hover { background-color: rgba(115, 115, 115, 0.1); }
 
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
 
-        /* Сетка */
-        .board-container {
+        .board-wrapper {
+            position: relative;
+            padding: 2px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+        }
+
+        .board-grid {
             display: grid;
             grid-template-columns: 24px repeat(10, 1fr);
             grid-template-rows: 24px repeat(10, 1fr);
             gap: 1px;
-            background-color: var(--grid-border);
-            border: 1px solid var(--grid-border);
-            border-radius: 8px;
-            padding: 1px;
-            margin: 0 auto;
-            max-width: 400px;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+            background-color: var(--grid-line);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
         }
 
-        .label {
+        .coord-label {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
-            color: var(--text-secondary);
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
             background-color: var(--bg-page);
-            font-family: 'Roboto Mono', monospace; 
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .cell {
-            background-color: var(--cell-empty);
+            background-color: var(--cell-bg);
             aspect-ratio: 1/1;
             position: relative;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.15s;
+            transition: all 0.15s ease;
         }
-        .cell:active { background-color: var(--cell-hover); }
-
         
-        /* Состояния клеток */
+        .cell:active { transform: scale(0.95); }
+        .cell:hover { background-color: var(--cell-hover); }
+
         .cell.miss::after {
-            content: '•';
-            color: var(--color-miss);
-            font-size: 20px;
-            line-height: 1;
+            content: '';
+            position: absolute;
+            width: 4px; height: 4px;
+            background-color: var(--col-miss);
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
         }
 
         .cell.hit {
-            background-color: rgba(245, 158, 11, 0.1);
+            background-color: rgba(245, 158, 11, 0.15);
+            box-shadow: inset 0 0 0 1px var(--col-hit);
         }
         .cell.hit::before, .cell.hit::after {
             content: ''; position: absolute;
-            width: 2px; height: 60%;
-            background-color: var(--color-hit);
-            border-radius: 2px;
+            width: 2px; height: 70%;
+            background-color: var(--col-hit);
+            border-radius: 99px;
+            top: 15%; left: 50%;
         }
-        .cell.hit::before { transform: rotate(45deg); }
-        .cell.hit::after { transform: rotate(-45deg); }
+        .cell.hit::before { transform: translateX(-50%) rotate(45deg); }
+        .cell.hit::after { transform: translateX(-50%) rotate(-45deg); }
 
+        .cell.sunk {
+            background-color: rgba(239, 68, 68, 0.2);
+            box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.3);
+        }
+        .cell.sunk::before, .cell.sunk::after {
+            background-color: var(--col-sunk);
+            content: ''; position: absolute;
+            width: 2px; height: 70%;
+            border-radius: 99px;
+            top: 15%; left: 50%;
+        }
+        .cell.sunk::before { transform: translateX(-50%) rotate(45deg); }
+        .cell.sunk::after { transform: translateX(-50%) rotate(-45deg); }
 
         .cell.ship {
-            background-color: var(--color-ship);
-            border-radius: 2px;
+            background-color: var(--col-ship);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
         }
         
+        .manual-mode .cell.ship { opacity: 0.9; }
+        .manual-mode .cell:hover { border: 1px dashed var(--col-ship); }
+
         .cell.ship.hit {
-            background-color: var(--color-hit);
+            background-color: var(--col-hit);
         }
         .cell.ship.hit::before, .cell.ship.hit::after { display: none; }
-        
-        /* Тепловая карта */
+
+        /* Heatmap */
         .heat-overlay {
             position: absolute; inset: 0;
-            background-color: var(--color-ai);
+            background-color: var(--col-ship);
             opacity: 0; pointer-events: none;
             transition: opacity 0.3s;
-            mix-blend-mode: hard-light; 
+            mix-blend-mode: hard-light;
         }
         
         .best-move {
-            box-shadow: inset 0 0 0 2px var(--color-target);
+            box-shadow: inset 0 0 0 2px var(--col-target);
             z-index: 10;
         }
-        .best-move::before {
+        .best-move::after {
             content: '';
-            position: absolute;
-            width: 100%; height: 100%;
-            background-color: var(--color-target);
-            opacity: 0.3;
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 0.3; transform: scale(0.8); }
-            50% { opacity: 0.1; transform: scale(1); }
-            100% { opacity: 0.3; transform: scale(0.8); }
+            position: absolute; inset: 0;
+            background-color: var(--col-target);
+            opacity: 0.2;
+            animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
         }
 
-        /* Модалка */
+        @keyframes ping {
+            75%, 100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        .drawer-backdrop {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 40;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+
         .drawer {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: var(--bg-panel);
-            border-top: 1px solid var(--grid-border);
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
-            transform: translateY(110%);
-            transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+            border-top: 1px solid var(--grid-line);
+            border-radius: 20px 20px 0 0;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 50;
-            padding: 16px 16px 32px 16px; 
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
         }
         .drawer.open { transform: translateY(0); }
 
-        /* Вкладки */
-        .tab-btn {
-            border-bottom: 2px solid transparent;
-            color: var(--text-secondary);
-            background-color: transparent; 
+        .btn-glass {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
             transition: all 0.2s;
-            font-weight: 500;
-            padding-top: 1rem;
-            padding-bottom: 1rem;
         }
-        .tab-btn.active {
-            border-bottom-color: var(--color-ai);
-            color: var(--text-primary);
-            background-color: var(--bg-panel); 
+        .btn-glass:hover { background: rgba(255, 255, 255, 0.1); }
+        .btn-glass:active { transform: scale(0.97); }
+
+        .log-item {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            border-left: 2px solid var(--grid-line);
+            padding-left: 8px;
+            margin-bottom: 6px;
+            opacity: 0.8;
         }
-        
-        /* Индикатор хода */
-        .turn-indicator {
-            transition: all 0.4s ease; 
-            cursor: pointer;
-            letter-spacing: 0.05em;
-            font-weight: 600;
-        }
-        .turn-indicator:hover {
-            filter: brightness(1.2);
-        }
-        .turn-player {
-            background-image: linear-gradient(to right, #16a34a, #22c55e); 
-            color: #dcfce7;
-        }
-        .turn-enemy {
-            background-image: linear-gradient(to right, #dc2626, #ef4444);
-            color: #fee2e2;
-        }
-        
-        #ai-status-panel {
-            background-color: var(--bg-panel);
-            border-bottom: 1px solid var(--grid-border);
-        }
-        #ai-mode-text {
-            transition: color 0.3s, text-shadow 0.3s;
-            animation: flicker 3s infinite;
-        }
-        @keyframes flicker {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
+        .log-item.hit { border-color: var(--col-hit); color: #fbbf24; }
+        .log-item.sunk { border-color: var(--col-sunk); color: #f87171; font-weight: bold; }
+        .log-item.miss { border-color: var(--col-miss); color: var(--text-muted); }
+        .log-item.enemy { border-left-style: dashed; opacity: 0.6; }
+        .log-item.sys { border-color: var(--col-ship); color: #e879f9; }
+
+        .radar-line {
+            position: absolute;
+            left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(192, 38, 211, 0.5), transparent);
+            box-shadow: 0 0 15px rgba(192, 38, 211, 0.6);
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 20;
+            animation: scan 4s linear infinite;
         }
         
-        .ship-icon {
-            display: flex;
-            gap: 1px;
-            padding: 2px;
-            border-radius: 2px;
-            transition: all 0.3s;
-        }
-        .ship-icon.sunk {
-            opacity: 0.2;
-            filter: grayscale(1);
-        }
-        .ship-icon .part {
-            width: 5px;
-            height: 10px;
-            background-color: var(--text-secondary);
-            border-radius: 1px;
-        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
     </style>
 </head>
-<body class="dark-mode font-sans"> 
+<body class="antialiased">
 
-    <!-- Шапка -->
-    <header class="bg-panel border-b border-grid-border pt-safe-top">
-        <!-- V12.1 PC-Layout: Добавлено lg:max-w-6xl -->
-        <div class="max-w-md lg:max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-            <h1 class="text-lg font-semibold tracking-tight flex items-center gap-2 text-blue-500">
-                <i class="fas fa-crosshairs"></i> B-ASSIST 
-                <!-- V12.1: Обновлен тег -->
-                <span class="text-xs font-mono bg-blue-900/50 px-1.5 py-0.5 rounded text-blue-300">V12.1</span>
-            </h1>
-            <div class="flex gap-2">
-                <button onclick="undo()" id="btn-undo" disabled class="btn btn-header w-9 h-9 rounded-full flex items-center justify-center">
-                    <i class="fas fa-arrow-rotate-left"></i>
-                </button>
-                <button onclick="resetGame()" class="btn btn-header w-9 h-9 rounded-full text-red-500 hover:bg-red-900/20 hover:text-red-400">
-                    <i class="fas fa-rotate-right"></i>
-                </button>
+    <header class="h-14 shrink-0 border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-4 lg:px-8">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-fuchsia-600 flex items-center justify-center shadow-lg shadow-fuchsia-500/20">
+                <i class="fas fa-infinity text-white text-sm"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-sm tracking-wide text-slate-100">B-ASSIST</h1>
+                <div class="text-[10px] font-mono text-fuchsia-400 tracking-wider">V20 OMEGA</div>
             </div>
         </div>
         
-        <!-- Табы V12.1 PC-Layout: Добавлено lg:hidden -->
-        <div class="flex max-w-md lg:max-w-6xl mx-auto border-t border-grid-border bg-page lg:hidden">
-            <button onclick="setTab('attack')" id="tab-attack" class="tab-btn active flex-1 text-sm text-center">
-                АТАКА (РАДАР)
-            </button>
-            <button onclick="setTab('defense')" id="tab-defense" class="tab-btn flex-1 text-sm text-center">
-                МОЙ ФЛОТ
+        <div class="flex items-center gap-2">
+            <button onclick="undo()" id="btn-undo" disabled class="w-10 h-10 rounded-full bg-slate-800 text-slate-400 border border-slate-700 flex items-center justify-center hover:bg-fuchsia-900/30 hover:text-fuchsia-400 hover:border-fuchsia-500/50 transition-all disabled:opacity-30">
+                <i class="fas fa-arrow-rotate-left text-sm"></i>
             </button>
         </div>
     </header>
 
-    <!-- Индикатор статуса -->
-    <div id="status-bar" 
-         onclick="toggleTurnManually()" 
-         class="turn-indicator turn-player w-full py-2.5 text-center text-xs uppercase shadow-lg">
-        ВАШ ХОД (нажмите для смены)
-    </div>
-
-    <!-- Панель Статуса AI -->
-    <div id="ai-status-panel" class="w-full shadow-lg">
-        <!-- V12.1 PC-Layout: Добавлено lg:max-w-6xl -->
-        <div class="max-w-md lg:max-w-6xl mx-auto p-3 flex justify-between items-center">
-            <div class="flex flex-col text-left">
-                <div class="text-xs text-blue-400 opacity-70">СТАТУС AI:</div>
-                <div id="ai-mode-text" class="text-sm font-semibold text-blue-400">[PREDATOR]</div>
-            </div>
-            <div class="flex flex-col text-right">
-                <div class="text-xs text-text-secondary">ФЛОТ ВРАГА:</div>
-                <div id="ship-stats-container" class="flex gap-2 mt-1">
-                    <!-- JS Generation -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Основная область -->
-    <!-- V12.1 PC-Layout: Добавлены lg:flex-row lg:max-w-6xl lg:mx-auto lg:gap-8 lg:items-start -->
-    <main class="flex-1 overflow-y-auto p-4 flex flex-col items-center lg:flex-row lg:max-w-6xl lg:mx-auto lg:gap-8 lg:items-start">
+    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
         
-        <!-- АТАКА -->
-        <!-- V12.1 PC-Layout: Добавлено lg:w-1/2 lg:max-w-none -->
-        <div id="view-attack" class="w-full max-w-md lg:w-1/2 lg:max-w-none flex flex-col gap-4">
+        <!-- Left Panel: Radar/Attack -->
+        <section id="section-attack" class="flex-1 flex flex-col p-4 lg:p-6 scroll-area lg:border-r border-slate-800 gap-6">
             
-            <!-- V12.1 PC-Layout: Добавлен заголовок, скрытый на мобильных -->
-            <h2 class="hidden lg:block text-xl font-semibold text-blue-400 text-center">
-                <i class="fas fa-broadcast-tower"></i> РАДАР (АТАКА)
-            </h2>
-
-            <div class="bg-panel p-3 rounded-lg border border-grid-border shadow-sm flex justify-between items-center">
-                <div class="text-sm text-text-secondary">Цель:</div>
-                <div id="suggestion" class="text-sm font-medium text-text-primary flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                    Анализ поля...
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fas fa-satellite-dish"></i> Радар (Атака)
+                </h2>
+                <div id="ai-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20">
+                    IDLE
                 </div>
             </div>
 
-            <!-- Сетка -->
-            <div class="board-container" id="grid-enemy">
-                <!-- JS generation -->
-            </div>
+            <div class="w-full max-w-[400px] mx-auto flex flex-col gap-4">
+                <div class="glass-panel p-3 rounded-lg flex items-center justify-between min-h-[50px]">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full bg-fuchsia-500 animate-pulse"></div>
+                        <div id="suggestion" class="text-sm font-mono text-fuchsia-100">
+                            OMEGA AI активен...
+                        </div>
+                    </div>
+                </div>
 
-            <div class="text-xs text-text-secondary text-center px-4">
-                Красная метка <span class="text-red-500 font-semibold">(PULSE)</span> — лучший ход.
-                <br>V12 "Predator" AI: Динамический анализ.
+                <div class="board-wrapper">
+                    <div class="radar-line"></div>
+                    <div class="board-grid" id="grid-enemy"></div>
+                </div>
+                
+                <div class="flex justify-between text-xs text-slate-500 font-mono px-2">
+                    <span>AI: NEURAL_HEURISTIC</span>
+                    <span id="prob-max">CONFIDENCE: 0%</span>
+                </div>
             </div>
-        </div>
-
-        <!-- ОБОРОНА -->
-        <!-- V12.1 PC-Layout: Добавлено lg:w-1/2 lg:max-w-none lg:flex (для отмены hidden) -->
-        <div id="view-defense" class="w-full max-w-md lg:w-1/2 lg:max-w-none flex flex-col gap-4 hidden lg:flex">
             
-            <!-- V12.1 PC-Layout: Добавлен заголовок, скрытый на мобильных -->
-            <h2 class="hidden lg:block text-xl font-semibold text-blue-400 text-center">
-                <i class="fas fa-shield-halved"></i> МОЙ ФЛОТ (ОБОРОНА)
-            </h2>
+            <div class="lg:hidden mt-4 pb-12">
+                <h3 class="text-xs font-bold text-slate-500 mb-2 uppercase">Журнал</h3>
+                <div id="log-mobile" class="h-48 overflow-y-auto pr-2 font-mono text-xs text-slate-400 border-t border-slate-800 pt-2"></div>
+            </div>
+        </section>
+
+        <!-- Right Panel: Fleet/Defense -->
+        <section id="section-defense" class="flex-1 flex flex-col bg-slate-900/50 lg:bg-transparent scroll-area border-t lg:border-t-0 border-slate-800">
             
-            <button onclick="generateNastyFleetV12()" class="btn bg-blue-600 text-white py-3 rounded-lg shadow-lg hover:bg-blue-500 flex items-center justify-center gap-2 font-semibold">
-                <i class="fas fa-shield-alt"></i> Расстановка "Decoy V12"
-            </button>
-
-            <div class="board-container" id="grid-player">
-                <!-- JS generation -->
+            <div class="flex lg:hidden border-b border-slate-800 shrink-0 sticky top-0 bg-slate-900 z-20">
+                <button onclick="scrollToSection('attack')" class="flex-1 py-3 text-xs font-bold text-fuchsia-400 border-b-2 border-fuchsia-500">РАДАР</button>
+                <button onclick="scrollToSection('defense')" class="flex-1 py-3 text-xs font-bold text-slate-500 border-b-2 border-transparent">ФЛОТ</button>
             </div>
 
-            <div class="text-xs text-text-secondary text-center">
-                "Decoy V12": Расстановка с приманками.<br>
-                Кликните на плашку "ХОД..." вверху для смены.
+            <div class="p-4 lg:p-6 flex flex-col h-full gap-6">
+                
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <i class="fas fa-shield-halved"></i> Мой Флот
+                    </h2>
+                    
+                    <button id="btn-edit-mode" onclick="toggleEditMode()" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all bg-slate-800 text-slate-400 hover:text-white border border-slate-700">
+                        <i class="fas fa-pen"></i>
+                        <span>Редактор</span>
+                    </button>
+                </div>
+
+                <div class="w-full max-w-[400px] mx-auto flex flex-col gap-4">
+                    <div class="flex gap-2">
+                         <button onclick="generateSmartFleet()" class="flex-1 btn-glass py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2">
+                            <i class="fas fa-chess-knight"></i> Инверсия (x100)
+                        </button>
+                        <button onclick="clearPlayerBoard()" class="w-10 btn-glass rounded-lg flex items-center justify-center text-slate-400 hover:text-red-400">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+
+                    <div class="board-wrapper" id="player-board-wrapper">
+                        <div class="board-grid" id="grid-player"></div>
+                    </div>
+                    
+                    <div class="text-center text-xs text-slate-500">
+                        <span id="edit-hint" class="hidden text-fuchsia-400 animate-pulse">КЛИК: ПУСТО > КОРАБЛЬ > РАНЕН > УДАЛИТЬ</span>
+                        <span id="normal-hint">Кликайте по сетке, чтобы отметить попадание противника</span>
+                    </div>
+                </div>
+
+                <div class="hidden lg:flex flex-col flex-1 min-h-[200px] bg-slate-950/50 rounded-xl border border-slate-800 p-4 mt-4 mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xs font-bold text-slate-500 uppercase">Боевой Журнал</h3>
+                        <span id="turn-counter" class="text-[10px] font-mono text-slate-600">ХОД 0</span>
+                    </div>
+                    <div id="log-desktop" class="flex-1 overflow-y-auto pr-2 custom-scrollbar font-mono text-sm space-y-1"></div>
+                </div>
             </div>
-        </div>
+        </section>
 
     </main>
 
-    <!-- Модальное окно ввода -->
+    <div id="drawer-backdrop" class="drawer-backdrop" onclick="closeDrawer()"></div>
     <div id="action-drawer" class="drawer">
-        <div class="w-12 h-1.5 bg-neutral-600 rounded-full mx-auto mb-4"></div>
+        <div class="w-12 h-1 bg-slate-700 rounded-full mx-auto mb-6"></div>
         
-        <div class="text-center mb-5">
-            <span id="drawer-coord" class="text-3xl font-mono font-bold text-text-primary">A1</span>
-            <div class="text-xs text-text-secondary mt-1">РЕЗУЛЬТАТ ВЫСТРЕЛА</div>
+        <div class="flex items-end justify-center gap-3 mb-8">
+            <span class="text-sm text-slate-400 pb-1">Цель:</span>
+            <span id="drawer-coord" class="text-4xl font-mono font-bold text-white">A1</span>
         </div>
         
-        <div class="flex gap-3">
-            <button onclick="commitResult(ACTION.MISS)" class="btn btn-action miss flex-1 py-4 rounded-xl flex flex-col items-center gap-1.5">
-                <i class="fas fa-circle-notch text-lg"></i>
-                Мимо
+        <div class="grid grid-cols-3 gap-3">
+            <button onclick="commitResult(1)" class="p-4 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-white transition-all flex flex-col items-center gap-2">
+                <i class="fas fa-water text-xl"></i>
+                <span class="text-xs font-bold">МИМО</span>
             </button>
-            <button onclick="commitResult(ACTION.HIT)" class="btn btn-action hit flex-1 py-4 rounded-xl flex flex-col items-center gap-1.5">
-                <i class="fas fa-xmark text-lg"></i>
-                Ранил
+            <button onclick="commitResult(2)" class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/50 text-amber-500 hover:bg-amber-500/20 transition-all flex flex-col items-center gap-2">
+                <i class="fas fa-burst text-xl"></i>
+                <span class="text-xs font-bold">РАНИЛ</span>
             </button>
-            <button onclick="commitResult(ACTION.SUNK)" class="btn btn-action sunk flex-1 py-4 rounded-xl flex flex-col items-center gap-1.5">
-                <i class="fas fa-skull text-lg"></i>
-                Потопил
+            <button onclick="commitResult(3)" class="p-4 rounded-xl bg-red-500/10 border border-red-500/50 text-red-500 hover:bg-red-500/20 transition-all flex flex-col items-center gap-2">
+                <i class="fas fa-skull text-xl"></i>
+                <span class="text-xs font-bold">УБИЛ</span>
             </button>
         </div>
-        <button onclick="closeDrawer()" class="mt-4 w-full py-3 text-text-secondary text-sm font-medium">Отмена</button>
     </div>
 
 <script>
-// --- КОНФИГУРАЦИЯ ---
 const SIZE = 10;
-const STATE = { UNKNOWN: 0, MISS: 1, HIT: 2, SHIP: 4 };
-const ACTION = { MISS: 1, HIT: 2, SUNK: 3 }; 
-const SHIPS_DATA = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
+const STATE = { UNKNOWN: 0, MISS: 1, HIT: 2, SHIP: 3, SUNK: 4 };
 const COORDS = "АБВГДЕЖЗИК".split("");
-let historyStack = [];
+const SHIPS_INIT = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
 
 let game = {
-    enemy: createMatrix(),
-    player: createMatrix(),
-    turnPlayer: true,
-    aiMode: 'PREDATOR' // V12
+    enemy: [],      
+    player: [],     
+    history: [],    
+    shipsLeft: [...SHIPS_INIT],
+    turn: 0,
+    editMode: false
 };
 
-let remainingEnemyShips = [...SHIPS_DATA];
-let probMap = createMatrix();
-let selectedCell = null;
+let probMap = [];
+let selectedTarget = null;
+let undoStack = [];
+let lastAiReason = "";
 
-// --- ИНИЦИАЛИЗАЦИЯ ---
 function init() {
-    renderBoard('grid-enemy', true);
-    renderBoard('grid-player', false);
-    renderShipStats();
-    generateNastyFleetV12(); // V12
+    createMatrices();
+    generateSmartFleet(); 
     analyzeGame();
-    updateUI();
+    renderAll();
+}
+
+function createMatrices() {
+    game.enemy = Array(SIZE).fill().map(() => Array(SIZE).fill(STATE.UNKNOWN));
+    game.player = Array(SIZE).fill().map(() => Array(SIZE).fill(STATE.UNKNOWN));
+    probMap = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
+}
+
+function renderAll() {
+    renderBoard(document.getElementById('grid-enemy'), game.enemy, true);
+    renderBoard(document.getElementById('grid-player'), game.player, false);
+    renderLogs();
     
-    // V12.1 PC-Layout: Устанавливаем правильную вкладку при загрузке
-    // На больших экранах вкладки не нужны, на малых - нужна 'attack'
-    if (window.innerWidth < 1024) {
-        setTab('attack');
+    document.getElementById('turn-counter').textContent = `ХОД ${game.turn}`;
+    document.getElementById('btn-undo').disabled = undoStack.length === 0;
+    
+    const editBtn = document.getElementById('btn-edit-mode');
+    const playerWrapper = document.getElementById('player-board-wrapper');
+    const editHint = document.getElementById('edit-hint');
+    const normalHint = document.getElementById('normal-hint');
+    
+    if (game.editMode) {
+        editBtn.classList.add('bg-fuchsia-600', 'text-white', 'border-fuchsia-500');
+        editBtn.classList.remove('bg-slate-800', 'text-slate-400');
+        playerWrapper.classList.add('manual-mode', 'ring-2', 'ring-fuchsia-500/50');
+        editHint.classList.remove('hidden');
+        normalHint.classList.add('hidden');
+    } else {
+        editBtn.classList.remove('bg-fuchsia-600', 'text-white', 'border-fuchsia-500');
+        editBtn.classList.add('bg-slate-800', 'text-slate-400');
+        playerWrapper.classList.remove('manual-mode', 'ring-2', 'ring-fuchsia-500/50');
+        editHint.classList.add('hidden');
+        normalHint.classList.remove('hidden');
     }
 }
 
-function createMatrix() {
-    return Array(SIZE).fill().map(() => Array(SIZE).fill(0));
-}
-
-// --- ОТРИСОВКА (без изменений) ---
-function renderBoard(id, isEnemy) {
-    const el = document.getElementById(id);
-    el.innerHTML = '';
-    
-    el.appendChild(createDiv('label', ''));
-    for(let i=1; i<=10; i++) el.appendChild(createDiv('label', i));
-
-    for(let r=0; r<SIZE; r++) {
-        el.appendChild(createDiv('label', COORDS[r]));
-        
-        for(let c=0; c<SIZE; c++) {
-            const cell = document.createElement('div');
-            cell.className = 'cell';
-            cell.dataset.r = r;
-            cell.dataset.c = c;
-            cell.onclick = () => handleInput(r, c, isEnemy);
-            
-            if(isEnemy) {
-                const heat = document.createElement('div');
-                heat.className = 'heat-overlay';
-                heat.id = `heat-${r}-${c}`;
-                cell.appendChild(heat);
-            }
-            el.appendChild(cell);
-        }
-    }
-}
-
-function renderShipStats() {
-    const container = document.getElementById('ship-stats-container');
+function renderBoard(container, matrix, isEnemy) {
     container.innerHTML = '';
     
-    const shipGroups = {};
-    [...SHIPS_DATA].forEach(size => {
-        shipGroups[size] = (shipGroups[size] || 0) + 1;
-    });
-
-    [4, 3, 2, 1].forEach(size => {
-        for (let i = 0; i < shipGroups[size]; i++) {
-            const icon = document.createElement('div');
-            icon.className = 'ship-icon';
-            icon.id = `ship-icon-${size}-${i}`;
-            
-            for (let p = 0; p < size; p++) {
-                const part = document.createElement('div');
-                part.className = 'part';
-                icon.appendChild(part);
-            }
-            container.appendChild(icon);
-        }
-    });
-    updateShipStats();
-}
-
-function updateShipStats() {
-    document.querySelectorAll('.ship-icon').forEach(icon => icon.classList.add('sunk'));
+    container.appendChild(mk('div', 'coord-label', ''));
+    for(let i=1; i<=10; i++) container.appendChild(mk('div', 'coord-label', i));
     
-    let counts = {};
-    remainingEnemyShips.forEach(size => {
-        counts[size] = (counts[size] || 0) + 1;
-        const icon = document.getElementById(`ship-icon-${size}-${counts[size] - 1}`);
-        if(icon) icon.classList.remove('sunk');
-    });
-}
-
-
-function createDiv(cls, text) {
-    const d = document.createElement('div');
-    d.className = cls;
-    d.textContent = text;
-    return d;
-}
-
-function updateView() {
     for(let r=0; r<SIZE; r++) {
+        container.appendChild(mk('div', 'coord-label', COORDS[r]));
+        
         for(let c=0; c<SIZE; c++) {
-            updateCell(r, c, true);
-            updateCell(r, c, false);
+            const val = matrix[r][c];
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            
+            if (val === STATE.MISS) cell.classList.add('miss');
+            else if (val === STATE.HIT) cell.classList.add('hit');
+            else if (val === STATE.SUNK) cell.classList.add('sunk');
+            else if (val === STATE.SHIP) cell.classList.add('ship');
+            
+            cell.onclick = () => handleCellClick(r, c, isEnemy);
+            
+            if (isEnemy && val === STATE.UNKNOWN && probMap[r] && probMap[r][c] > 0) {
+                const heat = mk('div', 'heat-overlay');
+                let max = 0;
+                probMap.forEach(row => row.forEach(v => max = Math.max(max, v)));
+                if(max > 0) heat.style.opacity = (probMap[r][c] / max) * 0.9;
+                cell.appendChild(heat);
+            }
+            
+            if (isEnemy && val === STATE.UNKNOWN && isBestMove(r, c)) {
+                cell.classList.add('best-move');
+            }
+            
+            container.appendChild(cell);
         }
     }
-    updateUI();
-    updateShipStats();
 }
 
-function updateCell(r, c, isEnemy) {
-    const board = isEnemy ? game.enemy : game.player;
-    const val = board[r][c];
-    const id = isEnemy ? 'grid-enemy' : 'grid-player';
-    const cell = document.querySelector(`#${id} .cell[data-r="${r}"][data-c="${c}"]`);
+function renderLogs() {
+    const mobileLog = document.getElementById('log-mobile');
+    const deskLog = document.getElementById('log-desktop');
     
-    if(!cell) return;
-    cell.classList.remove('miss', 'hit', 'ship', 'best-move');
+    const html = game.history.map((entry, i) => {
+        let colorClass = 'text-slate-400';
+        let prefix = '';
+        if(entry.type === 'HIT') colorClass = 'hit';
+        if(entry.type === 'SUNK') colorClass = 'sunk';
+        if(entry.type === 'MISS') colorClass = 'miss';
+        if(entry.type === 'SYS') colorClass = 'sys';
+        if(entry.type.includes('ENEMY')) {
+            colorClass += ' enemy';
+            prefix = '<i class="fas fa-robot mr-1 opacity-50"></i>';
+        }
+        
+        return `<div class="log-item ${colorClass}">
+            <span class="opacity-50 text-[10px] mr-2">#${game.history.length - i}</span>
+            <span>${prefix}${entry.text}</span>
+        </div>`;
+    }).reverse().join(''); 
     
-    if (val === STATE.MISS) cell.classList.add('miss');
-    if (val === STATE.HIT) cell.classList.add('hit');
-    
-    if (val === STATE.SHIP || val === STATE.HIT) {
-        if (!isEnemy) cell.classList.add('ship');
-    }
+    mobileLog.innerHTML = html;
+    deskLog.innerHTML = html;
 }
 
-// --- ЛОГИКА ВВОДА (без изменений) ---
-function handleInput(r, c, isEnemy) {
-    if(isEnemy) {
-        if(game.enemy[r][c] !== STATE.UNKNOWN) return;
-        selectedCell = {r, c};
+function mk(tag, cls, content) {
+    const el = document.createElement(tag);
+    if(cls) el.className = cls;
+    if(content !== undefined) el.textContent = content;
+    return el;
+}
+
+function handleCellClick(r, c, isEnemy) {
+    if (isEnemy) {
+        if (game.enemy[r][c] !== STATE.UNKNOWN) return;
+        selectedTarget = {r, c};
         document.getElementById('drawer-coord').textContent = `${COORDS[r]}${c+1}`;
-        document.getElementById('action-drawer').classList.add('open');
+        openDrawer();
     } else {
-        saveHistory();
-        const curr = game.player[r][c];
-        
-        if (curr === STATE.UNKNOWN) game.player[r][c] = STATE.MISS;
-        else if (curr === STATE.SHIP) game.player[r][c] = STATE.HIT;
-        else if (curr === STATE.MISS) game.player[r][c] = STATE.HIT;
-        else if (curr === STATE.HIT) game.player[r][c] = STATE.UNKNOWN;
-        
-        updateCell(r, c, false);
+        if (game.editMode) {
+            const curr = game.player[r][c];
+            if (curr === STATE.UNKNOWN || curr === STATE.MISS) {
+                game.player[r][c] = STATE.SHIP;
+            } else if (curr === STATE.SHIP) {
+                game.player[r][c] = STATE.HIT; 
+            } else {
+                game.player[r][c] = STATE.UNKNOWN;
+            }
+            renderAll(); 
+        } else {
+            pushState();
+            const curr = game.player[r][c];
+            const coordStr = `${COORDS[r]}${c+1}`;
+            
+            if (curr === STATE.UNKNOWN) {
+                game.player[r][c] = STATE.MISS;
+                addLog(`Враг (Мимо): ${coordStr}`, 'MISS_ENEMY');
+            } else if (curr === STATE.MISS) {
+                game.player[r][c] = STATE.HIT; 
+            } else if (curr === STATE.SHIP) {
+                game.player[r][c] = STATE.HIT;
+                addLog(`Враг (ПОПАЛ!): ${coordStr}`, 'HIT_ENEMY');
+            } else if (curr === STATE.HIT) {
+                game.player[r][c] = STATE.UNKNOWN; 
+            }
+            renderAll();
+        }
     }
 }
 
-function commitResult(res) {
-    if(!selectedCell) return;
-    saveHistory();
-    const {r, c} = selectedCell;
+function toggleEditMode() {
+    game.editMode = !game.editMode;
+    renderAll();
+}
 
-    if (res === ACTION.MISS) {
-        game.enemy[r][c] = STATE.MISS;
-        game.turnPlayer = false; 
-    } 
-    else if (res === ACTION.HIT) {
-        game.enemy[r][c] = STATE.HIT;
-        game.turnPlayer = true;
-    } 
-    else if (res === ACTION.SUNK) {
-        game.enemy[r][c] = STATE.HIT; 
-        smartMarkSunk(r, c); 
-        game.turnPlayer = true;
-    }
-
-    closeDrawer();
-    analyzeGame(); 
-    updateView(); 
+function openDrawer() {
+    document.getElementById('drawer-backdrop').classList.add('open');
+    document.getElementById('action-drawer').classList.add('open');
 }
 
 function closeDrawer() {
+    document.getElementById('drawer-backdrop').classList.remove('open');
     document.getElementById('action-drawer').classList.remove('open');
-    selectedCell = null;
+    selectedTarget = null;
 }
 
-// --- ЛОГИКА "ПОТОПИЛ" (без изменений) ---
-function smartMarkSunk(startR, startC) {
+function commitResult(resultCode) {
+    if (!selectedTarget) return;
+    pushState();
+    
+    const {r, c} = selectedTarget;
+    const coordStr = `${COORDS[r]}${c+1}`;
+    game.turn++;
+
+    if (resultCode === 1) { 
+        game.enemy[r][c] = STATE.MISS;
+        addLog(`Я: ${coordStr} - Мимо`, 'MISS');
+    } else if (resultCode === 2) { 
+        game.enemy[r][c] = STATE.HIT;
+        addLog(`Я: ${coordStr} - РАНЕН`, 'HIT');
+    } else if (resultCode === 3) { 
+        game.enemy[r][c] = STATE.HIT; 
+        const sunkCells = markSunkShip(r, c);
+        const size = sunkCells.length;
+        removeShipFromTracker(size);
+        addLog(`Я: ${coordStr} - УБИЛ (${size}-палубный)`, 'SUNK');
+    }
+
+    closeDrawer();
+    analyzeGame();
+    renderAll();
+}
+
+function markSunkShip(startR, startC) {
     let stack = [{r: startR, c: startC}];
-    let shipParts = [];
     let visited = new Set();
-    const getKey = (r,c) => `${r},${c}`;
+    let shipCells = [];
+    const key = (r,c) => `${r},${c}`;
 
     while(stack.length) {
-        let {r, c} = stack.pop();
-        if(visited.has(getKey(r,c))) continue;
-        visited.add(getKey(r,c));
+        const {r, c} = stack.pop();
+        const k = key(r,c);
+        if(visited.has(k)) continue;
+        visited.add(k);
         
-        if(game.enemy[r][c] === STATE.HIT) {
-            shipParts.push({r, c});
+        if (game.enemy[r][c] === STATE.HIT || game.enemy[r][c] === STATE.SUNK) { 
+            shipCells.push({r, c});
             [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr, dc]) => {
-                let nr=r+dr, nc=c+dc;
+                const nr=r+dr, nc=c+dc;
                 if(nr>=0 && nr<10 && nc>=0 && nc<10) stack.push({r:nr, c:nc});
             });
         }
     }
 
-    shipParts.forEach(({r, c}) => game.enemy[r][c] = STATE.HIT);
-
-    shipParts.forEach(({r, c}) => {
+    shipCells.forEach(({r, c}) => {
+        game.enemy[r][c] = STATE.SUNK;
+        
         for(let dr=-1; dr<=1; dr++) {
             for(let dc=-1; dc<=1; dc++) {
-                let nr=r+dr, nc=c+dc;
+                const nr=r+dr, nc=c+dc;
                 if(nr>=0 && nr<10 && nc>=0 && nc<10) {
-                    if(game.enemy[nr][nc] === STATE.UNKNOWN) {
-                        game.enemy[nr][nc] = STATE.MISS;
+                    if (game.enemy[nr][nc] === STATE.UNKNOWN) {
+                        game.enemy[nr][nc] = STATE.MISS; 
                     }
                 }
             }
         }
     });
     
-    const sunkSize = shipParts.length;
-    const shipIndex = remainingEnemyShips.indexOf(sunkSize);
-    if (shipIndex > -1) {
-        remainingEnemyShips.splice(shipIndex, 1);
+    return shipCells;
+}
+
+function removeShipFromTracker(size) {
+    const idx = game.shipsLeft.indexOf(size);
+    if(idx !== -1) {
+        game.shipsLeft.splice(idx, 1);
     } else {
-        console.warn(`Не найден корабль размером ${sunkSize}. Ищу ближайший...`);
-        const closest = remainingEnemyShips.reduce((prev, curr) => 
-            (Math.abs(curr - sunkSize) < Math.abs(prev - sunkSize) ? curr : prev), 0
-        );
-        if(closest > 0) {
-             const closestIndex = remainingEnemyShips.indexOf(closest);
-             if (closestIndex > -1) {
-                 remainingEnemyShips.splice(closestIndex, 1);
-                 console.warn(`Удален корабль размером ${closest} вместо ${sunkSize}`);
-             }
-        }
+        let closestIdx = -1;
+        let minDiff = 100;
+        game.shipsLeft.forEach((s, i) => {
+            if(Math.abs(s - size) < minDiff) {
+                minDiff = Math.abs(s - size);
+                closestIdx = i;
+            }
+        });
+        if(closestIdx !== -1) game.shipsLeft.splice(closestIdx, 1);
     }
 }
 
-// =============================================
-// ==       V12 "PREDATOR" AI                ==
-// =============================================
+// --- V20 OMEGA ALGORITHM ---
 
 function analyzeGame() {
-    document.querySelectorAll('.heat-overlay').forEach(el => el.style.opacity = 0);
-    document.querySelectorAll('.cell.best-move').forEach(el => el.classList.remove('best-move'));
+    // 1. Quantum Filter: Dead Zones
+    const deadMask = buildIslandMask();
     
-    // V11.2 Fix: Вызываем 1 раз
-    const hits = findHits();
-    // V11.2 Fix: Передаем hits
-    probMap = buildProbabilityMap(hits);
-
-    if (hits.length === 0) {
-        game.aiMode = 'PREDATOR';
-        runSearchPhaseV12(); // V12
-    } else if (hits.length === 1) {
-        game.aiMode = 'HUNT';
-        runHuntPhase(hits); 
-    } else {
-        game.aiMode = 'KILLER';
-        runFinishPhaseV11(hits); 
-    }
+    probMap = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
     
-    const aiModeEl = document.getElementById('ai-mode-text');
-    aiModeEl.textContent = `[${game.aiMode}]`;
-    aiModeEl.classList.remove('text-blue-400', 'text-amber-500');
-    if (game.aiMode === 'PREDATOR' && remainingEnemyShips.length > 0 && remainingEnemyShips.every(s => s === 1)) {
-        aiModeEl.classList.add('text-amber-500'); 
-        aiModeEl.style.textShadow = `0 0 8px ${'var(--color-ai-seek)'}`;
-    } else {
-        aiModeEl.classList.add('text-blue-400');
-        aiModeEl.style.textShadow = `0 0 8px ${'var(--color-ai)'}`;
-    }
-}
-
-// V11.2 FIX: Быстрая и простая функция
-function findHits() {
-    let hits = [];
+    const activeHits = [];
     for(let r=0; r<SIZE; r++) {
         for(let c=0; c<SIZE; c++) {
-            if(game.enemy[r][c] === STATE.HIT) {
-                // V12.1 FIX: Простая проверка на "живой" хит
-                // Если у него есть хоть один UNKNOWN сосед, он "живой"
-                let isFloating = false;
-                [[r-1, c], [r+1, c], [r, c-1], [r, c+1]].forEach(([nr, nc]) => {
-                    if (nr >= 0 && nr < 10 && nc >= 0 && nc < 10 && game.enemy[nr][nc] === STATE.UNKNOWN) {
-                        isFloating = true;
-                    }
-                });
-                
-                if (isFloating) {
-                    hits.push({r,c});
-                }
-            }
-        }
-    }
-    return hits;
-}
-
-
-// V12 "PREDATOR" MODE
-function runSearchPhaseV12() {
-    let maxVal = -Infinity;
-    let bestMoves = [];
-    let suggestionText = "Predator V12... Адаптивный анализ...";
-    let bonusMap = createMatrix();
-    
-    let maxShipSize = remainingEnemyShips.length > 0 ? Math.max(...remainingEnemyShips) : 0;
-
-    // V12: Динамические бонусы
-    const oceanBonus = (maxShipSize >= 3) ? 12 : 5; // Ищем большие корабли в океане
-    const canalBonus = (maxShipSize <= 2) ? 10 : 6; // Ищем маленькие в каналах
-    const chessBonus = 3; 
-
-    // 1. Создаем "Тактическую Карту Бонусов"
-    for(let r=0; r<SIZE; r++) {
-        for(let c=0; c<SIZE; c++) {
-            if (game.enemy[r][c] === STATE.UNKNOWN) {
-                let bonus = 0;
-                let missCount = 0;
-                let isOcean = true;
-
-                for(let dr=-1; dr<=1; dr++) {
-                    for(let dc=-1; dc<=1; dc++) {
-                        if (dr === 0 && dc === 0) continue;
-                        let nr = r + dr, nc = c + dc;
-                        if (nr >= 0 && nr < 10 && nc >= 0 && nc < 10) {
-                            if (game.enemy[nr][nc] === STATE.MISS) {
-                                missCount++;
-                                isOcean = false;
-                            }
-                        }
-                    }
-                }
-                
-                if (isOcean) bonus += oceanBonus; 
-                if (missCount >= 2) bonus += canalBonus;
-                if ((r + c) % 2 === 0) bonus += chessBonus;
-                bonusMap[r][c] = bonus;
-            }
+            if (game.enemy[r][c] === STATE.HIT) activeHits.push({r, c});
         }
     }
 
-    // 2. Ищем лучший ход = (Вероятность * 10) + Бонус
-    for(let r=0; r<SIZE; r++) {
-        for(let c=0; c<SIZE; c++) {
-             if (game.enemy[r][c] === STATE.UNKNOWN) {
-                let val = (probMap[r][c] * 10) + bonusMap[r][c];
-                
-                if (val > maxVal) {
-                    maxVal = val;
-                    bestMoves = [{r, c}];
-                } else if (val === maxVal) {
-                    bestMoves.push({r, c});
-                }
-            }
-        }
-    }
-    
-    // 3. Отдельный режим для 1-палубных (сбрасывает бонусы, ищет чистую P)
-    if (maxShipSize === 1) {
-        suggestionText = "V12: Поиск 1-палубных...";
-        maxVal = -1;
-        bestMoves = [];
-         for(let r=0; r<SIZE; r++) {
-            for(let c=0; c<SIZE; c++) {
-                 if (game.enemy[r][c] === STATE.UNKNOWN) {
-                    let val = probMap[r][c];
-                    if (val > maxVal) {
-                        maxVal = val;
-                        bestMoves = [{r, c}];
-                    } else if (val === maxVal) {
-                        bestMoves.push({r, c});
-                    }
-                }
-            }
-        }
-    }
+    let mode = 'SEARCH';
+    if (activeHits.length > 0) mode = 'TARGET';
 
-    highlightBestMoves(bestMoves, suggestionText);
-}
-
-
-// Фаза 2: ОХОТА (без изменений)
-function runHuntPhase(hits) {
-    const {r, c} = hits[0];
-    let targets = [];
-    let maxVal = -1; 
-
-    [[r-1, c], [r+1, c], [r, c-1], [r, c+1]].forEach(([nr, nc]) => {
-        if (nr >= 0 && nr < 10 && nc >= 0 && nc < 10 && game.enemy[nr][nc] === STATE.UNKNOWN) {
-            let val = probMap[nr][nc];
-            if (val > maxVal) {
-                maxVal = val;
-                targets = [{r: nr, c: nc}];
-            } else if (val === maxVal) {
-                targets.push({r: nr, c: nc});
-            }
-        }
-    });
-
-    highlightBestMoves(targets, "Нащупываю корабль...");
-}
-
-// V11 "KILLER" MODE (без изменений)
-function runFinishPhaseV11(hits) {
-    let targets = [];
-    const isVertical = hits.length > 1 && hits[0].c === hits[1].c;
-    const isHorizontal = hits.length > 1 && hits[0].r === hits[1].r;
-
-    let minR = Math.min(...hits.map(h => h.r));
-    let maxR = Math.max(...hits.map(h => h.r));
-    let minC = Math.min(...hits.map(h => h.c));
-    let maxC = Math.max(...hits.map(h => h.c));
-
-    if (isVertical) {
-        targets.push({r: minR - 1, c: minC});
-        targets.push({r: maxR + 1, c: minC});
-    } else if (isHorizontal) {
-        targets.push({r: minR, c: minC - 1});
-        targets.push({r: minR, c: maxC + 1});
-    }
-
-    let validTargets = targets.filter(({r, c}) => 
-        r >= 0 && r < 10 && c >= 0 && c < 10 && game.enemy[r][c] === STATE.UNKNOWN
-    );
-    
-    if(validTargets.length === 0) {
-        runHuntPhase(hits);
-        return;
-    }
-    
-    let bestMoves = [];
-    if (validTargets.length === 2) {
-        let prob0 = probMap[validTargets[0].r][validTargets[0].c];
-        let prob1 = probMap[validTargets[1].r][validTargets[1].c];
-
-        if (prob0 > 0 && prob1 === 0) {
-            bestMoves = [validTargets[0]];
-        } else if (prob1 > 0 && prob0 === 0) {
-            bestMoves = [validTargets[1]];
-        } else {
-            bestMoves = validTargets;
-        }
+    const badge = document.getElementById('ai-badge');
+    if (mode === 'TARGET') {
+        badge.textContent = 'OMEGA LOCK';
+        badge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-red-500/10 text-red-400 border border-red-500/20 animate-pulse';
+        lastAiReason = "Максимальный урон";
     } else {
-        bestMoves = validTargets;
+        badge.textContent = 'NEURAL SCAN';
+        badge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20';
+        lastAiReason = "Анализ вероятностей";
     }
 
-    highlightBestMoves(bestMoves, "V11 Killer: Завершаю!");
-}
-
-
-// V11.2 FIX: Принимает 'hits'
-function buildProbabilityMap(hits) {
-    let map = createMatrix();
+    let axisLock = null; 
+    let vectorBounds = null;
     
-    remainingEnemyShips.forEach(size => {
-        // Горизонталь
+    if (activeHits.length >= 2) {
+        const rows = new Set(activeHits.map(h => h.r));
+        const cols = new Set(activeHits.map(h => h.c));
+        
+        if (rows.size === 1) {
+            axisLock = 'row';
+            const cs = activeHits.map(h => h.c).sort((a,b)=>a-b);
+            vectorBounds = { type: 'row', r: [...rows][0], minC: cs[0], maxC: cs[cs.length-1] };
+            lastAiReason = "Векторный луч (Ось X)";
+        } else if (cols.size === 1) {
+            axisLock = 'col';
+            const rs = activeHits.map(h => h.r).sort((a,b)=>a-b);
+            vectorBounds = { type: 'col', c: [...cols][0], minR: rs[0], maxR: rs[rs.length-1] };
+            lastAiReason = "Векторный луч (Ось Y)";
+        }
+    }
+
+    // 2. OMEGA Heuristic Weighted Superposition
+    game.shipsLeft.forEach(shipSize => {
+        // Base weight increases with ship size (finding a battleship is better)
+        const sizeWeight = shipSize * 2;
+
+        // Horizontal
         for(let r=0; r<SIZE; r++) {
-            for(let c=0; c<=SIZE-size; c++) {
-                if(checkPlacement(r, c, size, false, hits)) {
-                    for(let i=0; i<size; i++) map[r][c+i]++;
-                }
-            }
-        }
-        // Вертикаль
-        for(let r=0; r<=SIZE-size; r++) {
-            for(let c=0; c<SIZE; c++) {
-                if(checkPlacement(r, c, size, true, hits)) {
-                    for(let i=0; i<size; i++) map[r+i][c]++;
-                }
-            }
-        }
-    });
-    return map;
-}
-
-// V11.2 FIX: Принимает 'hits'
-function checkPlacement(r, c, size, isVertical, hits) {
-    let touchesHit = false;
-    
-    for(let i=0; i<size; i++) {
-        let nr = isVertical ? r+i : r;
-        let nc = isVertical ? c : c+i;
-        
-        if (nr >= 10 || nc >= 10) return false;
-        if (game.enemy[nr][nc] === STATE.MISS) return false;
-        // V12.1 FIX: Проверяем, касается ли этот *потенциальный* корабль
-        // одного из *настоящих* попаданий, которые мы передали.
-        for (const hit of hits) {
-            if (hit.r === nr && hit.c === nc) {
-                touchesHit = true;
-                break;
-            }
-        }
-    }
-    
-    if (hits.length > 0 && !touchesHit) return false;
-    
-    return true;
-}
-
-// Функция подсветки (без изменений)
-function highlightBestMoves(moves, suggestionText) {
-    if (moves.length === 0) {
-        let anyUnknown = false;
-        for(let r=0; r<SIZE; r++) for(let c=0; c<SIZE; c++) {
-             if (game.enemy[r][c] === STATE.UNKNOWN) {
-                 moves.push({r,c});
-                 anyUnknown = true;
-             }
-        }
-        if (!anyUnknown) {
-             document.getElementById('suggestion').innerHTML = `<span class="text-blue-500">ПОБЕДА!</span>`;
-             return;
-        }
-    }
-    
-    let bestMove = moves[0];
-    let maxProb = -1;
-    for(const move of moves) {
-        // V12.1 FIX: Убедимся, что probMap[move.r] существует
-        const prob = probMap[move.r] ? probMap[move.r][move.c] : 0;
-        if (prob > maxProb) {
-            maxProb = prob;
-            bestMove = move;
-        }
-    }
-    
-    document.getElementById('suggestion').innerHTML = `
-        <span class="text-red-500 font-bold text-lg font-mono">${bestMove ? COORDS[bestMove.r] : '?'}${bestMove ? bestMove.c+1 : ''}</span>
-        <span class="text-text-secondary text-xs">(${suggestionText})</span>
-    `;
-
-    moves.forEach(({r, c}) => {
-         const prob = probMap[r] ? probMap[r][c] : 0;
-         if (maxProb >= 0 && prob === maxProb) {
-            const cell = document.querySelector(`#grid-enemy .cell[data-r="${r}"][data-c="${c}"]`);
-            if(cell) cell.classList.add('best-move');
-         } else if (maxProb < 0) {
-            const cell = document.querySelector(`#grid-enemy .cell[data-r="${r}"][data-c="${c}"]`);
-            if(cell) cell.classList.add('best-move');
-         }
-    });
-    
-    let maxProbGlobal = 0;
-    for(let r=0; r<SIZE; r++) for(let c=0; c<SIZE; c++) {
-        if(probMap[r][c] > maxProbGlobal) maxProbGlobal = probMap[r][c];
-    }
-    
-    if (maxProbGlobal > 0) {
-        for(let r=0; r<SIZE; r++) for(let c=0; c<SIZE; c++) {
-            if(probMap[r][c] > 0) {
-                const opacity = Math.min((probMap[r][c] / maxProbGlobal) * 0.5 + 0.1, 0.6);
-                const el = document.getElementById(`heat-${r}-${c}`);
-                if(el) el.style.opacity = opacity;
-            }
-        }
-    }
-}
-
-
-// --- "ХИТРАЯ" РАССТАНОВКА V12: "DECOY" ---
-function generateNastyFleetV12() {
-    let attempts = 0;
-    while (attempts < 100) {
-        attempts++;
-        game.player = createMatrix();
-        let ships = [...SHIPS_DATA].sort((a, b) => b - a);
-        let placedCount = 0;
-        
-        let edgeShips = [ships.shift(), ships.shift()]; // 4, 3
-        let centerShips = [ships.pop(), ships.pop(), ships.pop(), ships.pop()]; // 1, 1, 1, 1
-        let cornerShips = ships; // 3, 2, 2, 2
-
-        let allShipGroups = [
-            { list: edgeShips, zone: 'edge' },
-            { list: cornerShips, zone: 'corner' },
-            { list: centerShips, zone: 'center' }
-        ];
-        
-        // --- V12 Зоны ---
-        const h_edge = Math.random() < 0.5; // true = L/R, false = T/B
-        const c_diag = Math.random() < 0.5; // true = TL/BR, false = TR/BL
-        
-        const edgeZone1 = h_edge ? { r_min: 0, r_max: 9, c_min: 0, c_max: 0 } : { r_min: 0, r_max: 0, c_min: 0, c_max: 9 };
-        const edgeZone2 = h_edge ? { r_min: 0, r_max: 9, c_min: 9, c_max: 9 } : { r_min: 9, r_max: 9, c_min: 0, c_max: 9 };
-        const cornerZone1 = c_diag ? { r_min: 0, r_max: 3, c_min: 0, c_max: 3 } : { r_min: 0, r_max: 3, c_min: 6, c_max: 9 };
-        const cornerZone2 = c_diag ? { r_min: 6, r_max: 9, c_min: 6, c_max: 9 } : { r_min: 6, r_max: 9, c_min: 0, c_max: 3 };
-        const centerZone = { r_min: 2, r_max: 7, c_min: 2, c_max: 7 };
-        // ---------------
-        
-        let totalPlaced = 0;
-        let possible = true;
-
-        for (let group of allShipGroups) {
-            let zone1, zone2;
-            if (group.zone === 'edge') { zone1 = edgeZone1; zone2 = edgeZone2; }
-            if (group.zone === 'corner') { zone1 = cornerZone1; zone2 = cornerZone2; }
-            if (group.zone === 'center') { zone1 = centerZone; zone2 = centerZone; }
-            
-            let zoneToggle = false;
-            
-            for (let size of group.list) {
-                let placed = false;
-                let placeAttempts = 0;
-                while (!placed && placeAttempts < 500) {
-                    placeAttempts++;
-                    
-                    const zone = zoneToggle ? zone2 : zone1;
-                    zoneToggle = !zoneToggle; // Чередуем зоны
-                    
-                    let r = zone.r_min + Math.floor(Math.random() * (zone.r_max - zone.r_min + 1));
-                    let c = zone.c_min + Math.floor(Math.random() * (zone.c_max - zone.c_min + 1));
-                    let vert = (group.zone === 'edge' && h_edge) ? true : (group.zone === 'edge' && !h_edge) ? false : (Math.random() < 0.5); // На краях ставим вдоль
-
-                    if (canPlace(game.player, r, c, size, vert)) {
-                        for (let i = 0; i < size; i++) {
-                            let nr = vert ? r + i : r;
-                            let nc = vert ? c : c+i;
-                            game.player[nr][nc] = STATE.SHIP;
+            for(let c=0; c<=SIZE-shipSize; c++) {
+                if(canPlaceShipHypothetically(r, c, shipSize, false, activeHits, mode, axisLock, vectorBounds)) {
+                    for(let i=0; i<shipSize; i++) {
+                        if (!deadMask[r][c+i]) {
+                            // Weight: If hard locked, Massive weight. Else standard * size.
+                            let val = (axisLock ? 500 : sizeWeight);
+                            
+                            // Neural Heuristic: Open Space Bonus
+                            if (mode === 'SEARCH') {
+                                val += countOpenSpace(r, c+i);
+                            }
+                            
+                            probMap[r][c+i] += val;
                         }
-                        placed = true;
-                        totalPlaced++;
                     }
                 }
-                if (!placed) possible = false;
             }
         }
-        
-        if (possible && totalPlaced === SHIPS_DATA.length) {
-            updateView();
-            console.log(`Расстановка V12 "Decoy" сгенерирована с ${attempts} попыток.`);
-            return; 
+        // Vertical
+        for(let r=0; r<=SIZE-shipSize; r++) {
+            for(let c=0; c<SIZE; c++) {
+                if(canPlaceShipHypothetically(r, c, shipSize, true, activeHits, mode, axisLock, vectorBounds)) {
+                    for(let i=0; i<shipSize; i++) {
+                        if (!deadMask[r+i][c]) {
+                            let val = (axisLock ? 500 : sizeWeight);
+                            
+                            if (mode === 'SEARCH') {
+                                val += countOpenSpace(r+i, c);
+                            }
+                            
+                            probMap[r+i][c] += val;
+                        }
+                    }
+                }
+            }
         }
-    }
+    });
     
-    // Fallback на V11.2, если V12 не удалась
-    console.error("НЕ УДАЛОСЬ РАЗМЕСТИТЬ ФЛОТ V12 'Decoy'. Откат к V11.2 'Scatter'...");
-    generateNastyFleetV11_Fallback();
-}
-
-// V11.2 Расстановка, переименованная для Fallback
-function generateNastyFleetV11_Fallback() {
-    let attempts = 0;
-    while (attempts < 100) { 
-        attempts++;
-        game.player = createMatrix();
-        let ships = [...SHIPS_DATA].sort((a, b) => b - a); 
-        let placedCount = 0;
-
-        for (let size of ships) {
-            let placed = false;
-            let placeAttempts = 0;
-            while (!placed && placeAttempts < 1000) { 
-                placeAttempts++;
-                let r = Math.floor(Math.random() * 10);
-                let c = Math.floor(Math.random() * 10);
-                let vert = Math.random() < 0.5;
-
-                if (canPlace(game.player, r, c, size, vert)) {
-                    for (let i = 0; i < size; i++) {
-                        let nr = vert ? r + i : r;
-                        let nc = vert ? c : c+i;
-                        game.player[nr][nc] = STATE.SHIP;
-                    }
-                    placed = true;
-                    placedCount++;
+    // Adaptive Parity: If smallest ship > 1, use parity.
+    const minShip = Math.min(...game.shipsLeft);
+    if (mode === 'SEARCH' && minShip > 1) {
+        lastAiReason += " | Оптим. четности";
+        for(let r=0; r<SIZE; r++) {
+            for(let c=0; c<SIZE; c++) {
+                if ((r+c) % minShip !== 0) {
+                    probMap[r][c] = 0; 
                 }
             }
         }
-
-        if (placedCount === ships.length) {
-            updateView();
-            console.log(`Расстановка V12 'Decoy' НЕ УДАЛАСЬ. Активирован Fallback V11.2 'Scatter'.`);
-            return; 
-        }
     }
-    console.error("ОШИБКА FALLBACK V11.2. Флот не размещен.");
+
+    updateSuggestion();
 }
 
+function countOpenSpace(r, c) {
+    let open = 0;
+    // Check extended cross
+    [[-1,0],[1,0],[0,-1],[0,1],[-2,0],[2,0],[0,-2],[0,2]].forEach(([dr, dc]) => {
+        let nr=r+dr, nc=c+dc;
+        if(nr>=0 && nr<10 && nc>=0 && nc<10 && game.enemy[nr][nc] === STATE.UNKNOWN) open++;
+    });
+    return open * 0.5;
+}
 
-function canPlace(board, r, c, size, vert) {
-    if(vert && r+size > 10) return false;
-    if(!vert && c+size > 10) return false;
-    if(r < 0 || c < 0) return false;
+function buildIslandMask() {
+    const minShip = Math.min(...game.shipsLeft);
+    if (!minShip || minShip <= 1) return Array(SIZE).fill().map(() => Array(SIZE).fill(false)); 
+
+    let mask = Array(SIZE).fill().map(() => Array(SIZE).fill(false)); 
+    let visited = Array(SIZE).fill().map(() => Array(SIZE).fill(false));
+
+    for(let r=0; r<SIZE; r++) {
+        for(let c=0; c<SIZE; c++) {
+            if (game.enemy[r][c] === STATE.UNKNOWN && !visited[r][c]) {
+                let q = [{r,c}];
+                visited[r][c] = true;
+                let island = [{r,c}];
+                
+                let head = 0;
+                while(head < q.length) {
+                    let curr = q[head++];
+                    [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr, dc]) => {
+                        let nr=curr.r+dr, nc=curr.c+dc;
+                        if(nr>=0 && nr<10 && nc>=0 && nc<10 && 
+                           game.enemy[nr][nc] === STATE.UNKNOWN && !visited[nr][nc]) {
+                            visited[nr][nc] = true;
+                            q.push({r:nr, c:nc});
+                            island.push({r:nr, c:nc});
+                        }
+                    });
+                }
+                
+                if (island.length < minShip) {
+                    island.forEach(cell => mask[cell.r][cell.c] = true);
+                }
+            }
+        }
+    }
+    return mask;
+}
+
+function canPlaceShipHypothetically(r, c, size, vert, activeHits, mode, axisLock, vectorBounds) {
+    let intersectsActiveHit = false;
 
     for(let i=0; i<size; i++) {
         let nr = vert ? r+i : r;
         let nc = vert ? c : c+i;
         
-        if(nr >= 10 || nc >= 10) return false; 
+        const cell = game.enemy[nr][nc];
+        if (cell === STATE.MISS || cell === STATE.SUNK) return false;
         
-        for(let dr=-1; dr<=1; dr++) {
-            for(let dc=-1; dc<=1; dc++) {
-                let checkR = nr+dr;
-                let checkC = nc+dc;
-                if(checkR >=0 && checkR < 10 && checkC >=0 && checkC < 10) {
-                    if(board[checkR][checkC] === STATE.SHIP) return false;
+        if (cell === STATE.HIT) {
+            intersectsActiveHit = true;
+        }
+    }
+
+    if (mode === 'TARGET') {
+        if (!intersectsActiveHit) return false;
+        // Omega: Intelligent Vector Extrapolation
+        if (vectorBounds) {
+            if (vectorBounds.type === 'row' && vert) return false;
+            if (vectorBounds.type === 'col' && !vert) return false;
+            
+            // Heuristic: If we are extending a vector, check if the ship actually FITS the holes
+            // e.g. HIT HIT MISS ... cant put a 4-ship there.
+            // (Already handled by the loop above checking for MISS)
+        }
+        return true;
+    }
+
+    return true; 
+}
+
+
+function isBestMove(r, c) {
+    if (!probMap || !probMap[r]) return false;
+    let max = -1;
+    for(let rr=0; rr<SIZE; rr++) {
+        for(let cc=0; cc<SIZE; cc++) {
+            if (game.enemy[rr][cc] === STATE.UNKNOWN) {
+                if (probMap[rr][cc] > max) max = probMap[rr][cc];
+            }
+        }
+    }
+    return max > 0 && probMap[r][c] === max;
+}
+
+function updateSuggestion() {
+    let max = -1;
+    let best = null;
+    
+    for(let r=0; r<SIZE; r++) {
+        for(let c=0; c<SIZE; c++) {
+            if (game.enemy[r][c] === STATE.UNKNOWN) {
+                if (probMap[r][c] > max) {
+                    max = probMap[r][c];
+                    best = {r, c};
+                }
+            }
+        }
+    }
+    
+    const sugEl = document.getElementById('suggestion');
+    if (best) {
+        sugEl.innerHTML = `Рекомендую: <span class="text-white font-bold">${COORDS[best.r]}${best.c+1}</span>`;
+        let total = 0;
+        probMap.forEach(r => r.forEach(v => total += v));
+        const percent = total > 0 ? Math.round((max / total) * 100 * 3) : 0; 
+        document.getElementById('prob-max').textContent = `${Math.min(99, percent)}% | ${lastAiReason}`;
+    } else {
+        sugEl.innerHTML = `<span class="text-green-400">ПОБЕДА?</span>`;
+        document.getElementById('prob-max').textContent = `ВЕРОЯТНОСТЬ: 0%`;
+    }
+}
+
+// --- V20 INVERSE DENSITY PLACEMENT ---
+function generateSmartFleet() {
+    const ships = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
+    ships.sort((a,b) => b-a);
+    
+    // Inversion Strategy: 
+    // 1. Calculate a "Human Probability Map" (Where humans usually shoot: Center, Diagonals)
+    // 2. Place ships in lowest score areas.
+    
+    let bestBoard = null;
+    let lowestHeatScore = Infinity;
+    
+    for(let gen=0; gen<100; gen++) {
+        let tempBoard = createRandomFleet(ships);
+        if (tempBoard) {
+            let score = evaluateFleetExposure(tempBoard);
+            if (score < lowestHeatScore) {
+                lowestHeatScore = score;
+                bestBoard = tempBoard;
+            }
+        }
+    }
+
+    if (bestBoard) {
+        game.player = bestBoard;
+        renderAll();
+        addLog(`Флот: Инверсия плотности (S:${Math.floor(lowestHeatScore)})`, 'SYS');
+    } else {
+        alert("Не удалось построить флот. Попробуйте снова.");
+    }
+}
+
+function createRandomFleet(ships) {
+    let board = Array(SIZE).fill().map(() => Array(SIZE).fill(STATE.UNKNOWN));
+    for (let size of ships) {
+        let placed = false;
+        let attempts = 0;
+        while (!placed && attempts < 100) {
+            attempts++;
+            const r = Math.floor(Math.random() * 10);
+            const c = Math.floor(Math.random() * 10);
+            const vert = Math.random() > 0.5;
+            if (canPlaceStrict(board, r, c, size, vert)) {
+                for(let i=0; i<size; i++) {
+                    if(vert) board[r+i][c] = STATE.SHIP;
+                    else board[r][c+i] = STATE.SHIP;
+                }
+                placed = true;
+            }
+        }
+        if (!placed) return null;
+    }
+    return board;
+}
+
+// Low score is better (Anti-Crowd)
+function evaluateFleetExposure(board) {
+    let exposure = 0;
+    
+    // Human Heatmap Weights
+    // Center is hot (4,4 to 5,5). Corners are medium. Edges are medium.
+    // "Islands" are cold.
+    
+    for(let r=0; r<SIZE; r++) {
+        for(let c=0; c<SIZE; c++) {
+            if (board[r][c] === STATE.SHIP) {
+                // Central penalty
+                const distFromCenter = Math.abs(r - 4.5) + Math.abs(c - 4.5);
+                exposure += (10 - distFromCenter); // Higher if closer to center
+                
+                // Diagonal penalty (Humans shoot X patterns)
+                if (r === c || r === (9-c)) exposure += 5;
+            }
+        }
+    }
+    return exposure;
+}
+
+function canPlaceStrict(board, r, c, size, vert) {
+    if (vert) { if (r + size > 10) return false; } 
+    else { if (c + size > 10) return false; }
+
+    for (let i = 0; i < size; i++) {
+        let currR = vert ? r + i : r;
+        let currC = vert ? c : c + i;
+        for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+                let nr = currR + dr;
+                let nc = currC + dc;
+                if (nr >= 0 && nr < 10 && nc >= 0 && nc < 10) {
+                    if (board[nr][nc] === STATE.SHIP) return false;
                 }
             }
         }
@@ -1121,98 +1012,52 @@ function canPlace(board, r, c, size, vert) {
     return true;
 }
 
-// --- UI UTILS ---
-function toggleTurnManually() {
-    saveHistory();
-    game.turnPlayer = !game.turnPlayer;
-    updateUI();
+function clearPlayerBoard() {
+    game.player = Array(SIZE).fill().map(() => Array(SIZE).fill(STATE.UNKNOWN));
+    renderAll();
 }
 
-function setTab(mode) {
-    // V12.1 PC-Layout: Эта функция теперь должна работать только на мобильных.
-    // На lg экранах обе секции всегда видны.
-    if (window.innerWidth >= 1024) {
-        // На ПК вкладки не скрывают/показывают секции
-        if(document.getElementById('tab-attack')) document.getElementById('tab-attack').classList.remove('active');
-        if(document.getElementById('tab-defense')) document.getElementById('tab-defense').classList.remove('active');
-        if (document.getElementById(`tab-${mode}`)) {
-            document.getElementById(`tab-${mode}`).classList.add('active'); // Просто меняем подсветку
-        }
-        return; 
-    }
-
-    document.getElementById('view-attack').classList.toggle('hidden', mode !== 'attack');
-    document.getElementById('view-defense').classList.toggle('hidden', mode !== 'defense');
-    
-    document.getElementById('tab-attack').className = mode === 'attack' ? 'tab-btn active flex-1 text-sm text-center' : 'tab-btn flex-1 text-sm text-center';
-    document.getElementById('tab-defense').className = mode === 'defense' ? 'tab-btn flex-1 text-sm text-center' : 'tab-btn flex-1 text-sm text-center';
+function addLog(text, type) {
+    game.history.push({text, type});
 }
 
-function updateUI() {
-    const bar = document.getElementById('status-bar');
-
-    if(game.turnPlayer) {
-        bar.className = 'turn-indicator turn-player w-full py-2.5 text-center text-xs uppercase shadow-lg';
-        bar.textContent = "ВАШ ХОД (нажмите для смены)";
-    } else {
-        bar.className = 'turn-indicator turn-enemy w-full py-2.5 text-center text-xs uppercase shadow-lg';
-        bar.textContent = "ХОД ПРОТИВНИКА (нажмите для смены)";
-    }
-    document.getElementById('btn-undo').disabled = historyStack.length === 0;
-}
-
-function saveHistory() {
-    if(historyStack.length > 30) historyStack.shift();
-    historyStack.push(JSON.stringify({
-        game: game,
-        remaining: remainingEnemyShips
-    }));
+function pushState() {
+    const state = JSON.stringify({
+        enemy: game.enemy,
+        player: game.player,
+        shipsLeft: game.shipsLeft,
+        turn: game.turn,
+        history: game.history
+    });
+    undoStack.push(state);
+    if (undoStack.length > 50) undoStack.shift();
     document.getElementById('btn-undo').disabled = false;
 }
 
 function undo() {
-    if(historyStack.length === 0) return;
-    const lastState = JSON.parse(historyStack.pop());
-    game = lastState.game;
-    remainingEnemyShips = lastState.remaining;
-    
+    if (undoStack.length === 0) return;
+    const prev = JSON.parse(undoStack.pop());
+    game.enemy = prev.enemy;
+    game.player = prev.player;
+    game.shipsLeft = prev.shipsLeft;
+    game.turn = prev.turn;
+    game.history = prev.history;
     analyzeGame();
-    updateView();
+    renderAll();
 }
 
 function resetGame() {
-    if (window.confirm('Начать новую игру? Весь прогресс будет сброшен.')) {
-        game.enemy = createMatrix();
-        historyStack = [];
-        game.turnPlayer = true;
-        game.aiMode = 'PREDATOR';
-        remainingEnemyShips = [...SHIPS_DATA];
-        
-        init();
+    window.location.reload();
+}
+
+function scrollToSection(sec) {
+    if(sec === 'attack') {
+        document.getElementById('section-attack').scrollIntoView({behavior: 'smooth'});
+    } else {
+        document.getElementById('section-defense').scrollIntoView({behavior: 'smooth'});
     }
 }
 
-// V12.1 PC-Layout: Добавляем слушатель изменения размера окна
-// чтобы корректно обрабатывать переход mobile <-> desktop
-window.addEventListener('resize', () => {
-    if (window.innerWidth >= 1024) {
-        // На ПК - показываем обе секции
-        document.getElementById('view-attack').classList.remove('hidden');
-        document.getElementById('view-defense').classList.remove('hidden');
-    } else {
-        // На мобильном - восстанавливаем логику вкладок
-        // Показываем ту, которая активна
-        const activeTab = document.querySelector('.tab-btn.active');
-        if (activeTab && activeTab.id === 'tab-attack') {
-            setTab('attack');
-        } else {
-            setTab('defense');
-        }
-    }
-});
-
-
-// Start
 init();
 </script>
 </body>
