@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BS Assist: v12.1 PREDATOR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-page: #171717;      /* neutral-900 */
+            --bg-panel: #262626;     /* neutral-800 */
+            --grid-border: #404040;  /* neutral-700 */
+            --cell-empty: #262626;   /* neutral-800 */
+            --cell-hover: #404040;   /* neutral-700 */
+            --text-primary: #f5f5f5;  /* neutral-100 */
+            --text-secondary: #a3a3a3; /* neutral-400 */
+            
+            --color-miss: #737373;   /* neutral-500 */
+            --color-hit: #f59e0b;    /* amber-500 */
+            --color-target: #ef4444; /* red-500 */
+            --color-ship: #3b82f6;   /* blue-500 */
+            
+            --color-ai: var(--color-ship);
+            --color-ai-seek: var(--color-hit);
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ... (остальные стили V11 идентичны) ... */
+        /* Кнопки */
+        .btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500; 
+            border-radius: 0.5rem; 
+        }
+        .btn:active { transform: scale(0.96); }
+        .btn-header {
+            background-color: var(--bg-panel);
+            color: var(--text-secondary);
+            border: 1px solid var(--grid-border);
+        }
+        .btn-header:hover {
+            background-color: var(--cell-hover);
+            color: var(--text-primary);
+        }
+        .btn-header:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background-color: var(--bg-panel);
+        }
+        
+        .btn-action {
+            background-color: var(--bg-panel);
+            color: var(--text-primary);
+            border: 1px solid var(--grid-border);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+            border-radius: 0.75rem; /* 12px */
+            font-weight: 600;
+        }
+        .btn-action.hit {
+            border-color: var(--color-hit);
+            color: var(--color-hit);
+        }
+        .btn-action.hit:hover { background-color: rgba(245, 158, 11, 0.1); }
+        
+        .btn-action.sunk {
+            border-color: var(--color-target);
+            color: var(--color-target);
+        }
+        .btn-action.sunk:hover { background-color: rgba(239, 68, 68, 0.1); }
+        
+        .btn-action.miss {
+             border-color: var(--color-miss);
+             color: var(--color-miss);
+        }
+        .btn-action.miss:hover { background-color: rgba(115, 115, 115, 0.1); }
+
+
+        /* Сетка */
+        .board-container {
+            display: grid;
+            grid-template-columns: 24px repeat(10, 1fr);
+            grid-template-rows: 24px repeat(10, 1fr);
+            gap: 1px;
+            background-color: var(--grid-border);
+            border: 1px solid var(--grid-border);
+            border-radius: 8px;
+            padding: 1px;
+            margin: 0 auto;
+            max-width: 400px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+        }
+
+        .label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+            background-color: var(--bg-page);
+            font-family: 'Roboto Mono', monospace; 
+        }
+
+        .cell {
+            background-color: var(--cell-empty);
+            aspect-ratio: 1/1;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.15s;
+        }
+        .cell:active { background-color: var(--cell-hover); }
+
+        
+        /* Состояния клеток */
+        .cell.miss::after {
+            content: '•';
+            color: var(--color-miss);
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .cell.hit {
+            background-color: rgba(245, 158, 11, 0.1);
+        }
+        .cell.hit::before, .cell.hit::after {
+            content: ''; position: absolute;
+            width: 2px; height: 60%;
+            background-color: var(--color-hit);
+            border-radius: 2px;
+        }
+        .cell.hit::before { transform: rotate(45deg); }
+        .cell.hit::after { transform: rotate(-45deg); }
+
+
+        .cell.ship {
+            background-color: var(--color-ship);
+            border-radius: 2px;
+        }
+        
+        .cell.ship.hit {
+            background-color: var(--color-hit);
+        }
+        .cell.ship.hit::before, .cell.ship.hit::after { display: none; }
+        
+        /* Тепловая карта */
+        .heat-overlay {
+            position: absolute; inset: 0;
+            background-color: var(--color-ai);
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+            mix-blend-mode: hard-light; 
+        }
+        
+        .best-move {
+            box-shadow: inset 0 0 0 2px var(--color-target);
+            z-index: 10;
+        }
+        .best-move::before {
+            content: '';
+            position: absolute;
+            width: 100%; height: 100%;
+            background-color: var(--color-target);
+            opacity: 0.3;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 0.1; transform: scale(1); }
+            100% { opacity: 0.3; transform: scale(0.8); }
+        }
+
+        /* Модалка */
+        .drawer {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--bg-panel);
+            border-top: 1px solid var(--grid-border);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+            transform: translateY(110%);
+            transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+            z-index: 50;
+            padding: 16px 16px 32px 16px; 
+        }
+        .drawer.open { transform: translateY(0); }
+
+        /* Вкладки */
+        .tab-btn {
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            background-color: transparent; 
+            transition: all 0.2s;
+            font-weight: 500;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+        .tab-btn.active {
+            border-bottom-color: var(--color-ai);
+            color: var(--text-primary);
+            background-color: var(--bg-panel); 
+        }
+        
+        /* Индикатор хода */
+        .turn-indicator {
+            transition: all 0.4s ease; 
+            cursor: pointer;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+        .turn-indicator:hover {
+            filter: brightness(1.2);
+        }
+        .turn-player {
+            background-image: linear-gradient(to right, #16a34a, #22c55e); 
+            color: #dcfce7;
+        }
+        .turn-enemy {
+            background-image: linear-gradient(to right, #dc2626, #ef4444);
+            color: #fee2e2;
+        }
+        
+        #ai-status-panel {
+            background-color: var(--bg-panel);
+            border-bottom: 1px solid var(--grid-border);
+        }
+        #ai-mode-text {
+            transition: color 0.3s, text-shadow 0.3s;
+            animation: flicker 3s infinite;
+        }
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .ship-icon {
+            display: flex;
+            gap: 1px;
+            padding: 2px;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+        .ship-icon.sunk {
+            opacity: 0.2;
+            filter: grayscale(1);
+        }
+        .ship-icon .part {
+            width: 5px;
+            height: 10px;
+            background-color: var(--text-secondary);
+            border-radius: 1px;
+        }
+    </style>
+</head>
+<body class="dark-mode font-sans"> 
+
+    <!-- Шапка -->
+    <header class="bg-panel border-b border-grid-border pt-safe-top">
+        <!-- V12.1 PC-Layout: Добавлено lg:max-w-6xl -->
+        <div class="max-w-md lg:max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-lg font-semibold tracking-tight flex items-center gap-2 text-blue-500">
+                <i class="fas fa-crosshairs"></i> B-ASSIST 
+                <!-- V12.1: Обновлен тег -->
+                <span class="text-xs font-mono bg-blue-900/50 px-1.5 py-0.5 rounded text-blue-300">V12.1</span>
+            </h1>
+            <div class="flex gap-2">
+                <button onclick="undo()" id="btn-undo" disabled class="btn btn-header w-9 h-9 rounded-full flex items-center justify-center">
+                    <i class="fas fa-arrow-rotate-left"></i>
+                </button>
+                <button onclick="resetGame()" class="btn btn-header w-9 h-9 rounded-full text-red-500 hover:bg-red-900/20 hover:text-red-400">
+                    <i class="fas fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Табы V12.1 PC-Layout: Добавлено lg:hidden -->
+        <div class="flex max-w-md lg:max-w-6xl mx-auto border-t border-grid-border bg-page lg:hidden">
+            <button onclick="setTab('attack')" id="tab-attack" class="tab-btn active flex-1 text-sm text-center">
+                АТАКА (РАДАР)
+            </button>
+            <button onclick="setTab('defense')" id="tab-defense" class="tab-btn flex-1 text-sm text-center">
+                МОЙ ФЛОТ
+            </button>
+        </div>
+    </header>
+
+    <!-- Индикатор статуса -->
+    <div id="status-bar" 
+         onclick="toggleTurnManually()" 
+         class="turn-indicator turn-player w-full py-2.5 text-center text-xs uppercase shadow-lg">
+        ВАШ ХОД (нажмите для смены)
+    </div>
+
+    <!-- Панель Статуса AI -->
+    <div id="ai-status-panel" class="w-full shadow-lg">
+        <!-- V12.1 PC-Layout: Добавлено lg:max-w-6xl -->
+        <div class="max-w-md lg:max-w-6xl mx-auto p-3 flex justify-between items-center">
+            <div class="flex flex-col text-left">
+                <div class="text-xs text-blue-400 opacity-70">СТАТУС AI:</div>
+                <div id="ai-mode-text" class="text-sm font-semibold text-blue-400">[PREDATOR]</div>
+            </div>
+            <div class="flex flex-col text-right">
+                <div class="text-xs text-text-secondary">ФЛОТ ВРАГА:</div>
+                <div id="ship-stats-container" class="flex gap-2 mt-1">
+                    <!-- JS Generation -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Основная область -->
+    <!-- V12.1 PC-Layout: Добавлены lg:flex-row lg:max-w-6xl lg:mx-auto lg:gap-8 lg:items-start -->
+    <main class="flex-1 overflow-y-auto p-4 flex flex-col items-center lg:flex-row lg:max-w-6xl lg:mx-auto lg:gap-8 lg:items-start">
+        
+        <!-- АТАКА -->
+        <!-- V12.1 PC-Layout: Добавлено lg:w-1/2 lg:max-w-none -->
+        <div id="view-attack" class="w-full max-w-md lg:w-1/2 lg:max-w-none flex flex-col gap-4">
+            
+            <!-- V12.1 PC-Layout: Добавлен заголовок, скрытый на мобильных -->
+            <h2 class="hidden lg:block text-xl font-semibold text-blue-400 text-center">
+                <i class="fas fa-broadcast-tower"></i> РАДАР (АТАКА)
+            </h2>
+
+            <div class="bg-panel p-3 rounded-lg border border-grid-border shadow-sm flex justify-between items-center">
+                <div class="text-sm text-text-secondary">Цель:</div>
+                <div id="suggestion" class="text-sm font-medium text-text-primary flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                    Анализ поля...
+                </div>
+            </div>
+
+            <!-- Сетка -->
+            <div class="board-container" id="grid-enemy">
+                <!-- JS generation -->
+            </div>
+
+            <div class="text-xs text-text-secondary text-center px-4">
+                Красная метка <span class="text-red-500 font-semibold">(PULSE)</span> — лучший ход.
+                <br>V12 "Predator" AI: Динамический анализ.
+            </div>
+        </div>
+
+        <!-- ОБОРОНА -->
+        <!-- V12.1 PC-Layout: Добавлено lg:w-1/2 lg:max-w-none lg:flex (для отмены hidden) -->
+        <div id="view-defense" class="w-full max-w-md lg:w-1/2 lg:max-w-none flex flex-col gap-4 hidden lg:flex">
+            
+            <!-- V12.1 PC-Layout: Добавлен заголовок, скрытый на мобильных -->
+            <h2 class="hidden lg:block text-xl font-semibold text-blue-400 text-center">
+                <i class="fas fa-shield-halved"></i> МОЙ ФЛОТ (ОБОРОНА)
+            </h2>
+            
+            <button onclick="generateNastyFleetV12()" class="btn bg-blue-600 text-white py-3 rounded-lg shadow-lg hover:bg-blue-500 flex items-center justify-center gap-2 font-semibold">
+                <i class="fas fa-shield-alt"></i> Расстановка "Decoy V12"
+            </button>
+
+            <div class="board-container" id="grid-player">
+                <!-- JS generation -->
+            </div>
+
+            <div class="text-xs text-text-secondary text-center">
+                "Decoy V12": Расстановка с приманками.<br>
+                Кликните на плашку "ХОД..." вверху для смены.
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Модальное окно ввода -->
+    <div id="action-drawer" class="drawer">
+        <div class="w-12 h-1.5 bg-neutral-600 rounded-full mx-auto mb-4"></div>
+        
+        <div class="text-center mb-5">
+            <span id="drawer-coord" class="text-3xl font-mono font-bold text-text-primary">A1</span>
+            <div class="text-xs text-text-secondary mt-1">РЕЗУЛЬТАТ ВЫСТРЕЛА</div>
+        </div>
+        
+        <div class="flex gap-3">
+            <button onclick="commitResult(ACTION.MISS)" class="btn btn-action miss flex-1 py-4 rounded-xl flex flex-col items-center gap-1.5">
+                <i class="fas fa-circle-notch text-lg"></i>
+                Мимо
+            </button>
+            <button onclick="commitResult(ACTION.HIT)" class="btn btn-action hit flex-1 py-4 rounded-xl flex flex-col items-center gap-1.5">
+                <i class="fas fa-xmark text-lg"></i>
+                Ранил
+            </button>
+            <button onclick="commitResult(ACTION.SUNK)" class="btn btn-action sunk flex-1 py-4 rounded-xl flex flex-col items-center gap-1.5">
+                <i class="fas fa-skull text-lg"></i>
+                Потопил
+            </button>
+        </div>
+        <button onclick="closeDrawer()" class="mt-4 w-full py-3 text-text-secondary text-sm font-medium">Отмена</button>
+    </div>
+
+<script>
+// --- КОНФИГУРАЦИЯ ---
+const SIZE = 10;
+const STATE = { UNKNOWN: 0, MISS: 1, HIT: 2, SHIP: 4 };
+const ACTION = { MISS: 1, HIT: 2, SUNK: 3 }; 
+const SHIPS_DATA = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
+const COORDS = "АБВГДЕЖЗИК".split("");
+let historyStack = [];
+
+let game = {
+    enemy: createMatrix(),
+    player: createMatrix(),
+    turnPlayer: true,
+    aiMode: 'PREDATOR' // V12
+};
+
+let remainingEnemyShips = [...SHIPS_DATA];
+let probMap = createMatrix();
+let selectedCell = null;
+
+// --- ИНИЦИАЛИЗАЦИЯ ---
+function init() {
+    renderBoard('grid-enemy', true);
+    renderBoard('grid-player', false);
+    renderShipStats();
+    generateNastyFleetV12(); // V12
+    analyzeGame();
+    updateUI();
+    
+    // V12.1 PC-Layout: Устанавливаем правильную вкладку при загрузке
+    // На больших экранах вкладки не нужны, на малых - нужна 'attack'
+    if (window.innerWidth < 1024) {
+        setTab('attack');
+    }
+}
+
+function createMatrix() {
+    return Array(SIZE).fill().map(() => Array(SIZE).fill(0));
+}
+
+// --- ОТРИСОВКА (без изменений) ---
+function renderBoard(id, isEnemy) {
+    const el = document.getElementById(id);
+    el.innerHTML = '';
+    
+    el.appendChild(createDiv('label', ''));
+    for(let i=1; i<=10; i++) el.appendChild(createDiv('label', i));
+
+    for(let r=0; r<SIZE; r++) {
+        el.appendChild(createDiv('label', COORDS[r]));
+        
+        for(let c=0; c<SIZE; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.r = r;
+            cell.dataset.c = c;
+            cell.onclick = () => handleInput(r, c, isEnemy);
+            
+            if(isEnemy) {
+                const heat = document.createElement('div');
+                heat.className = 'heat-overlay';
+                heat.id = `heat-${r}-${c}`;
+                cell.appendChild(heat);
+            }
+            el.appendChild(cell);
+        }
+    }
+}
+
+function renderShipStats() {
+    const container = document.getElementById('ship-stats-container');
+    container.innerHTML = '';
+    
+    const shipGroups = {};
+    [...SHIPS_DATA].forEach(size => {
+        shipGroups[size] = (shipGroups[size] || 0) + 1;
+    });
+
+    [4, 3, 2, 1].forEach(size => {
+        for (let i = 0; i < shipGroups[size]; i++) {
+            const icon = document.createElement('div');
+            icon.className = 'ship-icon';
+            icon.id = `ship-icon-${size}-${i}`;
+            
+            for (let p = 0; p < size; p++) {
+                const part = document.createElement('div');
+                part.className = 'part';
+                icon.appendChild(part);
+            }
+            container.appendChild(icon);
+        }
+    });
+    updateShipStats();
+}
+
+function updateShipStats() {
+    document.querySelectorAll('.ship-icon').forEach(icon => icon.classList.add('sunk'));
+    
+    let counts = {};
+    remainingEnemyShips.forEach(size => {
+        counts[size] = (counts[size] || 0) + 1;
+        const icon = document.getElementById(`ship-icon-${size}-${counts[size] - 1}`);
+        if(icon) icon.classList.remove('sunk');
+    });
+}
+
+
+function createDiv(cls, text) {
+    const d = document.createElement('div');
+    d.className = cls;
+    d.textContent = text;
+    return d;
+}
+
+function updateView() {
+    for(let r=0; r<SIZE; r++) {
+        for(let c=0; c<SIZE; c++) {
+            updateCell(r, c, true);
+            updateCell(r, c, false);
+        }
+    }
+    updateUI();
+    updateShipStats();
+}
+
+function updateCell(r, c, isEnemy) {
+    const board = isEnemy ? game.enemy : game.player;
+    const val = board[r][c];
+    const id = isEnemy ? 'grid-enemy' : 'grid-player';
+    const cell = document.querySelector(`#${id} .cell[data-r="${r}"][data-c="${c}"]`);
+    
+    if(!cell) return;
+    cell.classList.remove('miss', 'hit', 'ship', 'best-move');
+    
+    if (val === STATE.MISS) cell.classList.add('miss');
+    if (val === STATE.HIT) cell.classList.add('hit');
+    
+    if (val === STATE.SHIP || val === STATE.HIT) {
+        if (!isEnemy) cell.classList.add('ship');
+    }
+}
+
+// --- ЛОГИКА ВВОДА (без изменений) ---
+function handleInput(r, c, isEnemy) {
+    if(isEnemy) {
+        if(game.enemy[r][c] !== STATE.UNKNOWN) return;
+        selectedCell = {r, c};
+        document.getElementById('drawer-coord').textContent = `${COORDS[r]}${c+1}`;
+        document.getElementById('action-drawer').classList.add('open');
+    } else {
+        saveHistory();
+        const curr = game.player[r][c];
+        
+        if (curr === STATE.UNKNOWN) game.player[r][c] = STATE.MISS;
+        else if (curr === STATE.SHIP) game.player[r][c] = STATE.HIT;
+        else if (curr === STATE.MISS) game.player[r][c] = STATE.HIT;
+        else if (curr === STATE.HIT) game.player[r][c] = STATE.UNKNOWN;
+        
+        updateCell(r, c, false);
+    }
+}
+
+function commitResult(res) {
+    if(!selectedCell) return;
+    saveHistory();
+    const {r, c} = selectedCell;
+
+    if (res === ACTION.MISS) {
+        game.enemy[r][c] = STATE.MISS;
+        game.turnPlayer = false; 
+    } 
+    else if (res === ACTION.HIT) {
+        game.enemy[r][c] = STATE.HIT;
+        game.turnPlayer = true;
+    } 
+    else if (res === ACTION.SUNK) {
+        game.enemy[r][c] = STATE.HIT; 
+        smartMarkSunk(r, c); 
+        game.turnPlayer = true;
+    }
+
+    closeDrawer();
+    analyzeGame(); 
+    updateView(); 
+}
+
+function closeDrawer() {
+    document.getElementById('action-drawer').classList.remove('open');
+    selectedCell = null;
+}
+
+// --- ЛОГИКА "ПОТОПИЛ" (без изменений) ---
+function smartMarkSunk(startR, startC) {
+    let stack = [{r: startR, c: startC}];
+    let shipParts = [];
+    let visited = new Set();
+    const getKey = (r,c) => `${r},${c}`;
+
+    while(stack.length) {
+        let {r, c} = stack.pop();
+        if(visited.has(getKey(r,c))) continue;
+        visited.add(getKey(r,c));
+        
+        if(game.enemy[r][c] === STATE.HIT) {
+            shipParts.push({r, c});
+            [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr, dc]) => {
+                let nr=r+dr, nc=c+dc;
+                if(nr>=0 && nr<10 && nc>=0 && nc<10) stack.push({r:nr, c:nc});
+            });
+        }
+    }
+
+    shipParts.forEach(({r, c}) => game.enemy[r][c] = STATE.HIT);
+
+    shipParts.forEach(({r, c}) => {
+        for(let dr=-1; dr<=1; dr++) {
+            for(let dc=-1; dc<=1; dc++) {
+                let nr=r+dr, nc=c+dc;
+                if(nr>=0 && nr<10 && nc>=0 && nc<10) {
+                    if(game.enemy[nr][nc] === STATE.UNKNOWN) {
+                        game.enemy[nr][nc] = STATE.MISS;
+                    }
+                }
+            }
+        }
+    });
+    
+    const sunkSize = shipParts.length;
+    const shipIndex = remainingEnemyShips.indexOf(sunkSize);
+    if (shipIndex > -1) {
+        remainingEnemyShips.splice(shipIndex, 1);
+    } else {
+        console.warn(`Не найден корабль размером ${sunkSize}. Ищу ближайший...`);
+        const closest = remainingEnemyShips.reduce((prev, curr) => 
+            (Math.abs(curr - sunkSize) < Math.abs(prev - sunkSize) ? curr : prev), 0
+        );
+        if(closest > 0) {
+             const closestIndex = remainingEnemyShips.indexOf(closest);
+             if (closestIndex > -1) {
+                 remainingEnemyShips.splice(closestIndex, 1);
+                 console.warn(`Удален корабль размером ${closest} вместо ${sunkSize}`);
+             }
+        }
+    }
+}
+
+// =============================================
+// ==       V12 "PREDATOR" AI                ==
+// =============================================
+
+function analyzeGame() {
+    document.querySelectorAll('.heat-overlay').forEach(el => el.style.opacity = 0);
+    document.querySelectorAll('.cell.best-move').forEach(el => el.classList.remove('best-move'));
+    
+    // V11.2 Fix: Вызываем 1 раз
+    const hits = findHits();
+    // V11.2 Fix: Передаем hits
+    probMap = buildProbabilityMap(hits);
+
+    if (hits.length === 0) {
+        game.aiMode = 'PREDATOR';
+        runSearchPhaseV12(); // V12
+    } else if (hits.length === 1) {
+        game.aiMode = 'HUNT';
+        runHuntPhase(hits); 
+    } else {
+        game.aiMode = 'KILLER';
+        runFinishPhaseV11(hits); 
+    }
+    
+    const aiModeEl = document.getElementById('ai-mode-text');
+    aiModeEl.textContent = `[${game.aiMode}]`;
+    aiModeEl.classList.remove('text-blue-400', 'text-amber-500');
+    if (game.aiMode === 'PREDATOR' && remainingEnemyShips.length > 0 && remainingEnemyShips.every(s => s === 1)) {
+        aiModeEl.classList.add('text-amber-500'); 
+        aiModeEl.style.textShadow = `0 0 8px ${'var(--color-ai-seek)'}`;
+    } else {
+        aiModeEl.classList.add('text-blue-400');
+        aiModeEl.style.textShadow = `0 0 8px ${'var(--color-ai)'}`;
+    }
+}
+
+// V11.2 FIX: Быстрая и простая функция
+function findHits() {
+    let hits = [];
+    for(let r=0; r<SIZE; r++) {
+        for(let c=0; c<SIZE; c++) {
+            if(game.enemy[r][c] === STATE.HIT) {
+                // V12.1 FIX: Простая проверка на "живой" хит
+                // Если у него есть хоть один UNKNOWN сосед, он "живой"
+                let isFloating = false;
+                [[r-1, c], [r+1, c], [r, c-1], [r, c+1]].forEach(([nr, nc]) => {
+                    if (nr >= 0 && nr < 10 && nc >= 0 && nc < 10 && game.enemy[nr][nc] === STATE.UNKNOWN) {
+                        isFloating = true;
+                    }
+                });
+                
+                if (isFloating) {
+                    hits.push({r,c});
+                }
+            }
+        }
+    }
+    return hits;
+}
+
+
+// V12 "PREDATOR" MODE
+function runSearchPhaseV12() {
+    let maxVal = -Infinity;
+    let bestMoves = [];
+    let suggestionText = "Predator V12... Адаптивный анализ...";
+    let bonusMap = createMatrix();
+    
+    let maxShipSize = remainingEnemyShips.length > 0 ? Math.max(...remainingEnemyShips) : 0;
+
+    // V12: Динамические бонусы
+    const oceanBonus = (maxShipSize >= 3) ? 12 : 5; // Ищем большие корабли в океане
+    const canalBonus = (maxShipSize <= 2) ? 10 : 6; // Ищем маленькие в каналах
+    const chessBonus = 3; 
+
+    // 1. Создаем "Тактическую Карту Бонусов"
+    for(let r=0; r<SIZE; r++) {
+        for(let c=0; c<SIZE; c++) {
+            if (game.enemy[r][c] === STATE.UNKNOWN) {
+                let bonus = 0;
+                let missCount = 0;
+                let isOcean = true;
+
+                for(let dr=-1; dr<=1; dr++) {
+                    for(let dc=-1; dc<=1; dc++) {
+                        if (dr === 0 && dc === 0) continue;
+                        let nr = r + dr, nc = c + dc;
+                        if (nr >= 0 && nr < 10 && nc >= 0 && nc < 10) {
+                            if (game.enemy[nr][nc] === STATE.MISS) {
+                                missCount++;
+                                isOcean = false;
+                            }
+                        }
+                    }
+                }
+                
+                if (isOcean) bonus += oceanBonus; 
+                if (missCount >= 2) bonus += canalBonus;
+                if ((r + c) % 2 === 0) bonus += chessBonus;
+                bonusMap[r][c] = bonus;
+            }
+        }
+    }
+
+    // 2. Ищем лучший ход = (Вероятность * 10) + Бонус
+    for(let r=0; r<SIZE; r++) {
+        for(let c=0; c<SIZE; c++) {
+             if (game.enemy[r][c] === STATE.UNKNOWN) {
+                let val = (probMap[r][c] * 10) + bonusMap[r][c];
+                
+                if (val > maxVal) {
+                    maxVal = val;
+                    bestMoves = [{r, c}];
+                } else if (val === maxVal) {
+                    bestMoves.push({r, c});
+                }
+            }
+        }
+    }
+    
+    // 3. Отдельный режим для 1-палубных (сбрасывает бонусы, ищет чистую P)
+    if (maxShipSize === 1) {
+        suggestionText = "V12: Поиск 1-палубных...";
+        maxVal = -1;
+        bestMoves = [];
+         for(let r=0; r<SIZE; r++) {
+            for(let c=0; c<SIZE; c++) {
+                 if (game.enemy[r][c] === STATE.UNKNOWN) {
+                    let val = probMap[r][c];
+                    if (val > maxVal) {
+                        maxVal = val;
+                        bestMoves = [{r, c}];
+                    } else if (val === maxVal) {
+                        bestMoves.push({r, c});
+                    }
+                }
+            }
+        }
+    }
+
+    highlightBestMoves(bestMoves, suggestionText);
+}
+
+
+// Фаза 2: ОХОТА (без изменений)
+function runHuntPhase(hits) {
+    const {r, c} = hits[0];
+    let targets = [];
+    let maxVal = -1; 
+
+    [[r-1, c], [r+1, c], [r, c-1], [r, c+1]].forEach(([nr, nc]) => {
+        if (nr >= 0 && nr < 10 && nc >= 0 && nc < 10 && game.enemy[nr][nc] === STATE.UNKNOWN) {
+            let val = probMap[nr][nc];
+            if (val > maxVal) {
+                maxVal = val;
+                targets = [{r: nr, c: nc}];
+            } else if (val === maxVal) {
+                targets.push({r: nr, c: nc});
+            }
+        }
+    });
+
+    highlightBestMoves(targets, "Нащупываю корабль...");
+}
+
+// V11 "KILLER" MODE (без изменений)
+function runFinishPhaseV11(hits) {
+    let targets = [];
+    const isVertical = hits.length > 1 && hits[0].c === hits[1].c;
+    const isHorizontal = hits.length > 1 && hits[0].r === hits[1].r;
+
+    let minR = Math.min(...hits.map(h => h.r));
+    let maxR = Math.max(...hits.map(h => h.r));
+    let minC = Math.min(...hits.map(h => h.c));
+    let maxC = Math.max(...hits.map(h => h.c));
+
+    if (isVertical) {
+        targets.push({r: minR - 1, c: minC});
+        targets.push({r: maxR + 1, c: minC});
+    } else if (isHorizontal) {
+        targets.push({r: minR, c: minC - 1});
+        targets.push({r: minR, c: maxC + 1});
+    }
+
+    let validTargets = targets.filter(({r, c}) => 
+        r >= 0 && r < 10 && c >= 0 && c < 10 && game.enemy[r][c] === STATE.UNKNOWN
+    );
+    
+    if(validTargets.length === 0) {
+        runHuntPhase(hits);
+        return;
+    }
+    
+    let bestMoves = [];
+    if (validTargets.length === 2) {
+        let prob0 = probMap[validTargets[0].r][validTargets[0].c];
+        let prob1 = probMap[validTargets[1].r][validTargets[1].c];
+
+        if (prob0 > 0 && prob1 === 0) {
+            bestMoves = [validTargets[0]];
+        } else if (prob1 > 0 && prob0 === 0) {
+            bestMoves = [validTargets[1]];
+        } else {
+            bestMoves = validTargets;
+        }
+    } else {
+        bestMoves = validTargets;
+    }
+
+    highlightBestMoves(bestMoves, "V11 Killer: Завершаю!");
+}
+
+
+// V11.2 FIX: Принимает 'hits'
+function buildProbabilityMap(hits) {
+    let map = createMatrix();
+    
+    remainingEnemyShips.forEach(size => {
+        // Горизонталь
+        for(let r=0; r<SIZE; r++) {
+            for(let c=0; c<=SIZE-size; c++) {
+                if(checkPlacement(r, c, size, false, hits)) {
+                    for(let i=0; i<size; i++) map[r][c+i]++;
+                }
+            }
+        }
+        // Вертикаль
+        for(let r=0; r<=SIZE-size; r++) {
+            for(let c=0; c<SIZE; c++) {
+                if(checkPlacement(r, c, size, true, hits)) {
+                    for(let i=0; i<size; i++) map[r+i][c]++;
+                }
+            }
+        }
+    });
+    return map;
+}
+
+// V11.2 FIX: Принимает 'hits'
+function checkPlacement(r, c, size, isVertical, hits) {
+    let touchesHit = false;
+    
+    for(let i=0; i<size; i++) {
+        let nr = isVertical ? r+i : r;
+        let nc = isVertical ? c : c+i;
+        
+        if (nr >= 10 || nc >= 10) return false;
+        if (game.enemy[nr][nc] === STATE.MISS) return false;
+        // V12.1 FIX: Проверяем, касается ли этот *потенциальный* корабль
+        // одного из *настоящих* попаданий, которые мы передали.
+        for (const hit of hits) {
+            if (hit.r === nr && hit.c === nc) {
+                touchesHit = true;
+                break;
+            }
+        }
+    }
+    
+    if (hits.length > 0 && !touchesHit) return false;
+    
+    return true;
+}
+
+// Функция подсветки (без изменений)
+function highlightBestMoves(moves, suggestionText) {
+    if (moves.length === 0) {
+        let anyUnknown = false;
+        for(let r=0; r<SIZE; r++) for(let c=0; c<SIZE; c++) {
+             if (game.enemy[r][c] === STATE.UNKNOWN) {
+                 moves.push({r,c});
+                 anyUnknown = true;
+             }
+        }
+        if (!anyUnknown) {
+             document.getElementById('suggestion').innerHTML = `<span class="text-blue-500">ПОБЕДА!</span>`;
+             return;
+        }
+    }
+    
+    let bestMove = moves[0];
+    let maxProb = -1;
+    for(const move of moves) {
+        // V12.1 FIX: Убедимся, что probMap[move.r] существует
+        const prob = probMap[move.r] ? probMap[move.r][move.c] : 0;
+        if (prob > maxProb) {
+            maxProb = prob;
+            bestMove = move;
+        }
+    }
+    
+    document.getElementById('suggestion').innerHTML = `
+        <span class="text-red-500 font-bold text-lg font-mono">${bestMove ? COORDS[bestMove.r] : '?'}${bestMove ? bestMove.c+1 : ''}</span>
+        <span class="text-text-secondary text-xs">(${suggestionText})</span>
+    `;
+
+    moves.forEach(({r, c}) => {
+         const prob = probMap[r] ? probMap[r][c] : 0;
+         if (maxProb >= 0 && prob === maxProb) {
+            const cell = document.querySelector(`#grid-enemy .cell[data-r="${r}"][data-c="${c}"]`);
+            if(cell) cell.classList.add('best-move');
+         } else if (maxProb < 0) {
+            const cell = document.querySelector(`#grid-enemy .cell[data-r="${r}"][data-c="${c}"]`);
+            if(cell) cell.classList.add('best-move');
+         }
+    });
+    
+    let maxProbGlobal = 0;
+    for(let r=0; r<SIZE; r++) for(let c=0; c<SIZE; c++) {
+        if(probMap[r][c] > maxProbGlobal) maxProbGlobal = probMap[r][c];
+    }
+    
+    if (maxProbGlobal > 0) {
+        for(let r=0; r<SIZE; r++) for(let c=0; c<SIZE; c++) {
+            if(probMap[r][c] > 0) {
+                const opacity = Math.min((probMap[r][c] / maxProbGlobal) * 0.5 + 0.1, 0.6);
+                const el = document.getElementById(`heat-${r}-${c}`);
+                if(el) el.style.opacity = opacity;
+            }
+        }
+    }
+}
+
+
+// --- "ХИТРАЯ" РАССТАНОВКА V12: "DECOY" ---
+function generateNastyFleetV12() {
+    let attempts = 0;
+    while (attempts < 100) {
+        attempts++;
+        game.player = createMatrix();
+        let ships = [...SHIPS_DATA].sort((a, b) => b - a);
+        let placedCount = 0;
+        
+        let edgeShips = [ships.shift(), ships.shift()]; // 4, 3
+        let centerShips = [ships.pop(), ships.pop(), ships.pop(), ships.pop()]; // 1, 1, 1, 1
+        let cornerShips = ships; // 3, 2, 2, 2
+
+        let allShipGroups = [
+            { list: edgeShips, zone: 'edge' },
+            { list: cornerShips, zone: 'corner' },
+            { list: centerShips, zone: 'center' }
+        ];
+        
+        // --- V12 Зоны ---
+        const h_edge = Math.random() < 0.5; // true = L/R, false = T/B
+        const c_diag = Math.random() < 0.5; // true = TL/BR, false = TR/BL
+        
+        const edgeZone1 = h_edge ? { r_min: 0, r_max: 9, c_min: 0, c_max: 0 } : { r_min: 0, r_max: 0, c_min: 0, c_max: 9 };
+        const edgeZone2 = h_edge ? { r_min: 0, r_max: 9, c_min: 9, c_max: 9 } : { r_min: 9, r_max: 9, c_min: 0, c_max: 9 };
+        const cornerZone1 = c_diag ? { r_min: 0, r_max: 3, c_min: 0, c_max: 3 } : { r_min: 0, r_max: 3, c_min: 6, c_max: 9 };
+        const cornerZone2 = c_diag ? { r_min: 6, r_max: 9, c_min: 6, c_max: 9 } : { r_min: 6, r_max: 9, c_min: 0, c_max: 3 };
+        const centerZone = { r_min: 2, r_max: 7, c_min: 2, c_max: 7 };
+        // ---------------
+        
+        let totalPlaced = 0;
+        let possible = true;
+
+        for (let group of allShipGroups) {
+            let zone1, zone2;
+            if (group.zone === 'edge') { zone1 = edgeZone1; zone2 = edgeZone2; }
+            if (group.zone === 'corner') { zone1 = cornerZone1; zone2 = cornerZone2; }
+            if (group.zone === 'center') { zone1 = centerZone; zone2 = centerZone; }
+            
+            let zoneToggle = false;
+            
+            for (let size of group.list) {
+                let placed = false;
+                let placeAttempts = 0;
+                while (!placed && placeAttempts < 500) {
+                    placeAttempts++;
+                    
+                    const zone = zoneToggle ? zone2 : zone1;
+                    zoneToggle = !zoneToggle; // Чередуем зоны
+                    
+                    let r = zone.r_min + Math.floor(Math.random() * (zone.r_max - zone.r_min + 1));
+                    let c = zone.c_min + Math.floor(Math.random() * (zone.c_max - zone.c_min + 1));
+                    let vert = (group.zone === 'edge' && h_edge) ? true : (group.zone === 'edge' && !h_edge) ? false : (Math.random() < 0.5); // На краях ставим вдоль
+
+                    if (canPlace(game.player, r, c, size, vert)) {
+                        for (let i = 0; i < size; i++) {
+                            let nr = vert ? r + i : r;
+                            let nc = vert ? c : c+i;
+                            game.player[nr][nc] = STATE.SHIP;
+                        }
+                        placed = true;
+                        totalPlaced++;
+                    }
+                }
+                if (!placed) possible = false;
+            }
+        }
+        
+        if (possible && totalPlaced === SHIPS_DATA.length) {
+            updateView();
+            console.log(`Расстановка V12 "Decoy" сгенерирована с ${attempts} попыток.`);
+            return; 
+        }
+    }
+    
+    // Fallback на V11.2, если V12 не удалась
+    console.error("НЕ УДАЛОСЬ РАЗМЕСТИТЬ ФЛОТ V12 'Decoy'. Откат к V11.2 'Scatter'...");
+    generateNastyFleetV11_Fallback();
+}
+
+// V11.2 Расстановка, переименованная для Fallback
+function generateNastyFleetV11_Fallback() {
+    let attempts = 0;
+    while (attempts < 100) { 
+        attempts++;
+        game.player = createMatrix();
+        let ships = [...SHIPS_DATA].sort((a, b) => b - a); 
+        let placedCount = 0;
+
+        for (let size of ships) {
+            let placed = false;
+            let placeAttempts = 0;
+            while (!placed && placeAttempts < 1000) { 
+                placeAttempts++;
+                let r = Math.floor(Math.random() * 10);
+                let c = Math.floor(Math.random() * 10);
+                let vert = Math.random() < 0.5;
+
+                if (canPlace(game.player, r, c, size, vert)) {
+                    for (let i = 0; i < size; i++) {
+                        let nr = vert ? r + i : r;
+                        let nc = vert ? c : c+i;
+                        game.player[nr][nc] = STATE.SHIP;
+                    }
+                    placed = true;
+                    placedCount++;
+                }
+            }
+        }
+
+        if (placedCount === ships.length) {
+            updateView();
+            console.log(`Расстановка V12 'Decoy' НЕ УДАЛАСЬ. Активирован Fallback V11.2 'Scatter'.`);
+            return; 
+        }
+    }
+    console.error("ОШИБКА FALLBACK V11.2. Флот не размещен.");
+}
+
+
+function canPlace(board, r, c, size, vert) {
+    if(vert && r+size > 10) return false;
+    if(!vert && c+size > 10) return false;
+    if(r < 0 || c < 0) return false;
+
+    for(let i=0; i<size; i++) {
+        let nr = vert ? r+i : r;
+        let nc = vert ? c : c+i;
+        
+        if(nr >= 10 || nc >= 10) return false; 
+        
+        for(let dr=-1; dr<=1; dr++) {
+            for(let dc=-1; dc<=1; dc++) {
+                let checkR = nr+dr;
+                let checkC = nc+dc;
+                if(checkR >=0 && checkR < 10 && checkC >=0 && checkC < 10) {
+                    if(board[checkR][checkC] === STATE.SHIP) return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+// --- UI UTILS ---
+function toggleTurnManually() {
+    saveHistory();
+    game.turnPlayer = !game.turnPlayer;
+    updateUI();
+}
+
+function setTab(mode) {
+    // V12.1 PC-Layout: Эта функция теперь должна работать только на мобильных.
+    // На lg экранах обе секции всегда видны.
+    if (window.innerWidth >= 1024) {
+        // На ПК вкладки не скрывают/показывают секции
+        if(document.getElementById('tab-attack')) document.getElementById('tab-attack').classList.remove('active');
+        if(document.getElementById('tab-defense')) document.getElementById('tab-defense').classList.remove('active');
+        if (document.getElementById(`tab-${mode}`)) {
+            document.getElementById(`tab-${mode}`).classList.add('active'); // Просто меняем подсветку
+        }
+        return; 
+    }
+
+    document.getElementById('view-attack').classList.toggle('hidden', mode !== 'attack');
+    document.getElementById('view-defense').classList.toggle('hidden', mode !== 'defense');
+    
+    document.getElementById('tab-attack').className = mode === 'attack' ? 'tab-btn active flex-1 text-sm text-center' : 'tab-btn flex-1 text-sm text-center';
+    document.getElementById('tab-defense').className = mode === 'defense' ? 'tab-btn flex-1 text-sm text-center' : 'tab-btn flex-1 text-sm text-center';
+}
+
+function updateUI() {
+    const bar = document.getElementById('status-bar');
+
+    if(game.turnPlayer) {
+        bar.className = 'turn-indicator turn-player w-full py-2.5 text-center text-xs uppercase shadow-lg';
+        bar.textContent = "ВАШ ХОД (нажмите для смены)";
+    } else {
+        bar.className = 'turn-indicator turn-enemy w-full py-2.5 text-center text-xs uppercase shadow-lg';
+        bar.textContent = "ХОД ПРОТИВНИКА (нажмите для смены)";
+    }
+    document.getElementById('btn-undo').disabled = historyStack.length === 0;
+}
+
+function saveHistory() {
+    if(historyStack.length > 30) historyStack.shift();
+    historyStack.push(JSON.stringify({
+        game: game,
+        remaining: remainingEnemyShips
+    }));
+    document.getElementById('btn-undo').disabled = false;
+}
+
+function undo() {
+    if(historyStack.length === 0) return;
+    const lastState = JSON.parse(historyStack.pop());
+    game = lastState.game;
+    remainingEnemyShips = lastState.remaining;
+    
+    analyzeGame();
+    updateView();
+}
+
+function resetGame() {
+    if (window.confirm('Начать новую игру? Весь прогресс будет сброшен.')) {
+        game.enemy = createMatrix();
+        historyStack = [];
+        game.turnPlayer = true;
+        game.aiMode = 'PREDATOR';
+        remainingEnemyShips = [...SHIPS_DATA];
+        
+        init();
+    }
+}
+
+// V12.1 PC-Layout: Добавляем слушатель изменения размера окна
+// чтобы корректно обрабатывать переход mobile <-> desktop
+window.addEventListener('resize', () => {
+    if (window.innerWidth >= 1024) {
+        // На ПК - показываем обе секции
+        document.getElementById('view-attack').classList.remove('hidden');
+        document.getElementById('view-defense').classList.remove('hidden');
+    } else {
+        // На мобильном - восстанавливаем логику вкладок
+        // Показываем ту, которая активна
+        const activeTab = document.querySelector('.tab-btn.active');
+        if (activeTab && activeTab.id === 'tab-attack') {
+            setTab('attack');
+        } else {
+            setTab('defense');
+        }
+    }
+});
+
+
+// Start
+init();
+</script>
+</body>
+</html>
